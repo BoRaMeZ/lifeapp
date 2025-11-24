@@ -108,7 +108,7 @@ const FocusMode: React.FC<FocusModeProps> = ({ item, lang, onComplete, onCancel 
         )}
 
         <div className="mt-12 text-gray-600 text-sm font-mono">
-            {isActive ? "TARGET LOCKED. DISTRACTIONS DISABLED." : "READY TO ENGAGE?"}
+            {isActive ? t.focus.locked : t.focus.ready}
         </div>
       </div>
     </div>

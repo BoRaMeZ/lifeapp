@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Clock, Briefcase, Video, Moon, Coffee, Plus, Trash2, CheckCircle, Circle, Brain, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Clock, Briefcase, Video, Moon, Coffee, Plus, Trash2, CheckCircle, Circle, Brain, Zap, Play } from 'lucide-react';
 import { Language, AgendaItem } from '../types';
 import { getTranslation } from '../utils/translations';
 import FocusMode from './FocusMode';
@@ -16,6 +16,31 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP, items, setItems }) => {
   const t = getTranslation(lang);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeFocusItem, setActiveFocusItem] = useState<AgendaItem | null>(null);
+  const [currentTimeMinutes, setCurrentTimeMinutes] = useState(0);
+
+  // Update time every minute to highlight active block
+  useEffect(() => {
+    const updateTime = () => {
+        const now = new Date();
+        setCurrentTimeMinutes(now.getHours() * 60 + now.getMinutes());
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const isBlockActive = (start: string, end: string) => {
+    const [sH, sM] = start.split(':').map(Number);
+    const [eH, eM] = end.split(':').map(Number);
+    const startMins = sH * 60 + sM;
+    const endMins = eH * 60 + eM;
+    return currentTimeMinutes >= startMins && currentTimeMinutes < endMins;
+  };
+
+  const isBlockPast = (end: string) => {
+    const [eH, eM] = end.split(':').map(Number);
+    return currentTimeMinutes >= (eH * 60 + eM);
+  };
 
   // Form State
   const [newItem, setNewItem] = useState<{
@@ -96,20 +121,21 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP, items, setItems }) => {
     }
   };
 
-  const getColors = (type: string, completed: boolean) => {
-    if (completed) return 'border-cyber-green/50 bg-cyber-green/10 text-gray-400';
+  const getCardStyles = (type: string, completed: boolean, active: boolean) => {
+    if (completed) return 'border-cyber-green/30 bg-cyber-green/5 opacity-70';
+    if (active) return 'border-cyber-cyan bg-cyber-cyan/10 shadow-[0_0_15px_rgba(6,182,212,0.15)] ring-1 ring-cyber-cyan';
     
     switch(type) {
-        case 'creative': return 'border-cyber-purple bg-cyber-purple/10 text-white';
-        case 'learning': return 'border-cyber-cyan bg-cyber-cyan/10 text-white';
-        case 'base': return 'border-cyber-green bg-cyber-green/10 text-white';
-        case 'work': return 'border-gray-700 bg-gray-900/50 text-gray-500';
-        default: return 'border-gray-700 bg-cyber-800 text-gray-400';
+        case 'creative': return 'border-cyber-purple bg-cyber-purple/5';
+        case 'learning': return 'border-cyber-cyan bg-cyber-cyan/5';
+        case 'base': return 'border-cyber-green bg-cyber-green/5';
+        case 'work': return 'border-gray-700 bg-gray-900/50';
+        default: return 'border-gray-700 bg-cyber-800';
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto pb-20">
+    <div className="max-w-3xl mx-auto pb-24">
       
       {/* Focus Mode Overlay */}
       {activeFocusItem && (
@@ -121,73 +147,115 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP, items, setItems }) => {
           />
       )}
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 sticky top-0 bg-cyber-900/95 backdrop-blur z-30 py-4 border-b border-cyber-700/50 md:static md:bg-transparent md:border-none md:py-0">
         <h2 className="text-2xl font-display text-white flex items-center gap-2">
             <Clock className="text-cyber-cyan" /> {t.agenda.title}
         </h2>
         <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan px-3 py-1.5 rounded-lg hover:bg-cyber-cyan hover:text-black transition-all font-bold text-sm"
+            className="flex items-center gap-2 bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan px-3 py-2 rounded-lg hover:bg-cyber-cyan hover:text-black transition-all font-bold text-sm"
         >
-            <Plus size={16} /> {t.agenda.addBlock}
+            <Plus size={18} /> <span className="hidden md:inline">{t.agenda.addBlock}</span>
         </button>
       </div>
       
-      <div className="relative border-l-2 border-cyber-700 ml-4 md:ml-6 space-y-6">
+      <div className="relative border-l-2 border-cyber-700 ml-4 md:ml-6 space-y-8">
         {items.length === 0 && (
             <div className="ml-8 text-gray-500 italic">{t.agenda.empty}</div>
         )}
 
         {items.map((item) => {
           const Icon = getIcon(item.type);
+          const active = isBlockActive(item.startTime, item.endTime);
+          const past = isBlockPast(item.endTime);
+          
           return (
-            <div key={item.id} className="relative pl-8 md:pl-12 group">
-              <div className={`absolute -left-[9px] top-6 w-4 h-4 rounded-full border-2 transition-colors ${item.completed ? 'bg-cyber-green border-cyber-green' : 'bg-cyber-900 border-gray-600'}`}></div>
+            <div key={item.id} className={`relative pl-6 md:pl-12 group transition-all duration-500 ${past && !item.completed ? 'opacity-60 grayscale-[0.5]' : 'opacity-100'}`}>
               
-              <div className={`p-4 rounded-xl border relative ${getColors(item.type, item.completed)} transition-all duration-300`}>
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-2 mb-2">
-                    <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg mt-1 ${item.completed ? 'bg-cyber-green/20 text-cyber-green' : 'bg-cyber-900'}`}>
-                            <Icon size={18} />
-                        </div>
-                        <div>
-                             <h3 className={`font-display font-bold text-lg ${item.completed ? 'line-through opacity-50' : ''}`}>{item.title}</h3>
-                             <p className="text-sm opacity-70 leading-snug max-w-md">{item.desc}</p>
-                        </div>
-                    </div>
-                    <div className="flex flex-row md:flex-col items-center md:items-end gap-2 pl-12 md:pl-0">
-                         <span className="font-mono text-sm opacity-80 bg-black/30 px-2 py-1 rounded border border-white/5">
-                            {item.startTime} - {item.endTime}
-                        </span>
-                    </div>
-                </div>
+              {/* Timeline Dot */}
+              <div className={`absolute -left-[9px] top-6 w-4 h-4 rounded-full border-2 transition-all z-10 
+                  ${active ? 'bg-cyber-cyan border-cyber-cyan animate-pulse shadow-[0_0_10px_#06b6d4]' : 
+                    item.completed ? 'bg-cyber-green border-cyber-green' : 'bg-cyber-900 border-gray-600'}`}>
+              </div>
 
-                <div className="flex justify-between items-center mt-3 ml-11 border-t border-white/5 pt-2">
-                    <span className="text-xs font-mono font-bold text-cyber-cyan/70">+{item.xpReward} XP</span>
+              {/* ACTIVE INDICATOR LABEL (Mobile) */}
+              {active && (
+                  <div className="absolute -top-4 left-6 md:left-12 bg-cyber-cyan text-black text-[10px] font-bold px-2 py-0.5 rounded-t animate-bounce">
+                      {t.agenda.nowActive}
+                  </div>
+              )}
+              
+              <div className={`rounded-xl border relative overflow-hidden transition-all duration-300 ${getCardStyles(item.type, item.completed, active)}`}>
+                
+                {/* Mobile Optimized Layout: Header (Time) -> Body (Content) -> Footer (Actions) */}
+                <div className="p-4">
                     
-                    <div className="flex gap-2">
-                        {/* FOCUS BUTTON */}
+                    {/* Header: Icon + Time */}
+                    <div className="flex justify-between items-start mb-3">
+                         <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${active ? 'bg-cyber-cyan text-black' : item.completed ? 'bg-cyber-green/20 text-cyber-green' : 'bg-cyber-900 text-gray-400'}`}>
+                                <Icon size={20} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className={`font-mono font-bold text-lg leading-none ${active ? 'text-cyber-cyan' : 'text-gray-300'}`}>
+                                    {item.startTime}
+                                </span>
+                                <span className="text-xs text-gray-500 font-mono">
+                                    to {item.endTime}
+                                </span>
+                            </div>
+                         </div>
+                         
+                         <div className="text-right">
+                             <span className="text-xs font-mono font-bold text-cyber-cyan bg-cyber-900/50 px-2 py-1 rounded border border-cyber-700/50">
+                                +{item.xpReward} XP
+                             </span>
+                         </div>
+                    </div>
+
+                    {/* Body: Title & Desc */}
+                    <div className="mb-4">
+                        <h3 className={`font-display font-bold text-lg mb-1 ${item.completed ? 'line-through text-gray-500' : 'text-white'}`}>
+                            {item.title}
+                        </h3>
+                        <p className="text-sm text-gray-400 leading-snug">{item.desc}</p>
+                    </div>
+
+                    {/* Footer: Actions Row */}
+                    <div className="flex items-center gap-2 pt-3 border-t border-white/5">
+                        {/* Focus Button - Prominent if Active */}
                         {!item.completed && (
                             <button 
                                 onClick={() => setActiveFocusItem(item)}
-                                className="flex items-center gap-1 px-3 py-1 rounded text-xs font-bold border border-yellow-500/50 text-yellow-500 hover:bg-yellow-500 hover:text-black transition-all"
+                                className={`flex-1 py-2 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all
+                                    ${active 
+                                        ? 'bg-yellow-500 text-black hover:bg-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.2)]' 
+                                        : 'bg-transparent border border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/10'
+                                    }`}
                             >
-                                <Zap size={12} /> {t.agenda.startTimer}
+                                {active ? <Play size={14} fill="black" /> : <Zap size={14} />}
+                                {t.agenda.startTimer}
                             </button>
                         )}
 
-                        <button 
-                            onClick={() => deleteItem(item.id)}
-                            className="p-1.5 text-gray-600 hover:text-red-500 transition-colors"
-                        >
-                            <Trash2 size={16} />
-                        </button>
+                        {/* Complete Button - Main Action */}
                         <button 
                             onClick={() => toggleComplete(item.id)}
-                            className={`flex items-center gap-2 px-3 py-1 rounded text-sm font-bold transition-all ${item.completed ? 'bg-cyber-green text-black' : 'bg-cyber-900 border border-cyber-cyan text-cyber-cyan hover:bg-cyber-cyan hover:text-black'}`}
+                            className={`flex-[2] py-2 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all 
+                                ${item.completed 
+                                    ? 'bg-cyber-green/20 text-cyber-green border border-cyber-green/50' 
+                                    : 'bg-cyber-900 border border-cyber-cyan text-cyber-cyan hover:bg-cyber-cyan hover:text-black'}`}
                         >
-                            {item.completed ? <CheckCircle size={14}/> : <Circle size={14}/>}
+                            {item.completed ? <CheckCircle size={16} /> : <Circle size={16} />}
                             {item.completed ? 'DONE' : 'COMPLETE'}
+                        </button>
+
+                        {/* Delete - Small & Subtle */}
+                        <button 
+                            onClick={() => deleteItem(item.id)}
+                            className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                        >
+                            <Trash2 size={18} />
                         </button>
                     </div>
                 </div>

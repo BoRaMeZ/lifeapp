@@ -32,6 +32,7 @@ export const translations = {
       title: 'Tactical Timeline',
       startTimer: 'Start Timer',
       addBlock: 'Add Time Block',
+      nowActive: 'NOW ACTIVE',
       empty: 'No schedule defined. Add a block to start.',
       modal: {
         title: 'New Time Block',
@@ -86,15 +87,31 @@ export const translations = {
       },
       detail: {
         tabs: { details: 'Details', script: 'AI Script' },
-        mentalBlock: 'Mental Block Cure',
+        mentalBlock: 'Creative Unblock',
         vibe: 'Vibe / Tone',
         context: 'What happens? (Context)',
         goal: 'Goal',
         generate: 'Generate Script with AI',
         generating: 'Writing script...',
         scriptLabel: 'Generated Script',
+        waiting: 'AI Waiting for input...',
         save: 'Save Project',
-        close: 'Close'
+        close: 'Close',
+        options: {
+            vibe: {
+                funny: 'Funny / High Energy',
+                serious: 'Serious / Educational',
+                rage: 'Rage / Gamer Moment',
+                chill: 'Chill / Storytime',
+                epic: 'Epic / Montage'
+            },
+            goal: {
+                engagement: 'Engagement (Comments)',
+                viral: 'Viral (Shares)',
+                followers: 'Followers',
+                sales: 'Sales/Promo'
+            }
+        }
       }
     },
     baseOps: {
@@ -167,7 +184,9 @@ export const translations = {
       bonus: 'Bonus XP Gained',
       stop: 'Abort Mission',
       resume: 'Resume',
-      pause: 'Pause'
+      pause: 'Pause',
+      locked: 'TARGET LOCKED. DISTRACTIONS DISABLED.',
+      ready: 'READY TO ENGAGE?'
     }
   },
   es: {
@@ -200,6 +219,7 @@ export const translations = {
       title: 'Línea Temporal Táctica',
       startTimer: 'Búnker',
       addBlock: 'Añadir Bloque',
+      nowActive: 'EN CURSO',
       empty: 'Agenda vacía. Añade un bloque para empezar.',
       modal: {
         title: 'Nuevo Bloque de Tiempo',
@@ -254,15 +274,31 @@ export const translations = {
       },
       detail: {
         tabs: { details: 'Detalles', script: 'IA Guionista' },
-        mentalBlock: 'Cura de Bloqueo Mental',
+        mentalBlock: 'Desbloqueo Creativo',
         vibe: 'Vibe / Tono',
-        context: '¿Qué ocurre? (Contexto)',
+        context: '¿Qué sucede? (Contexto)',
         goal: 'Objetivo',
         generate: 'Generar Guion con IA',
         generating: 'Escribiendo guion...',
         scriptLabel: 'Guion Generado',
+        waiting: 'IA esperando datos...',
         save: 'Guardar Proyecto',
-        close: 'Cerrar'
+        close: 'Cerrar',
+        options: {
+            vibe: {
+                funny: 'Gracioso / Alta Energía',
+                serious: 'Serio / Educativo',
+                rage: 'Rage / Momento Gamer',
+                chill: 'Chill / Storytime',
+                epic: 'Épico / Montaje'
+            },
+            goal: {
+                engagement: 'Engagement (Comentarios)',
+                viral: 'Viralidad (Compartir)',
+                followers: 'Seguidores',
+                sales: 'Venta/Promo'
+            }
+        }
       }
     },
     baseOps: {
@@ -335,7 +371,9 @@ export const translations = {
       bonus: 'Bonus XP Ganado',
       stop: 'Abortar Misión',
       resume: 'Reanudar',
-      pause: 'Pausar'
+      pause: 'Pausar',
+      locked: 'OBJETIVO FIJADO. DISTRACCIONES DESACTIVADAS.',
+      ready: '¿LISTO PARA INICIAR?'
     }
   }
 };

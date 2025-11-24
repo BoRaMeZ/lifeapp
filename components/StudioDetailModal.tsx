@@ -23,9 +23,9 @@ const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, on
   
   // Script Data State
   const [scriptData, setScriptData] = useState<ScriptData>(project.script || {
-      vibe: 'Funny / High Energy',
+      vibe: t.studio.detail.options.vibe.funny,
       context: '',
-      goal: 'Engagement',
+      goal: t.studio.detail.options.goal.engagement,
       generatedContent: ''
   });
 
@@ -124,11 +124,11 @@ const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, on
                                             onChange={e => setScriptData({...scriptData, vibe: e.target.value})}
                                             className="w-full bg-cyber-900 border border-cyber-700 rounded p-2 text-white text-sm outline-none focus:border-cyber-purple"
                                         >
-                                            <option>Funny / High Energy</option>
-                                            <option>Serious / Educational</option>
-                                            <option>Rage / Gamer Moment</option>
-                                            <option>Chill / Storytime</option>
-                                            <option>Epic / Montage</option>
+                                            <option value={t.studio.detail.options.vibe.funny}>{t.studio.detail.options.vibe.funny}</option>
+                                            <option value={t.studio.detail.options.vibe.serious}>{t.studio.detail.options.vibe.serious}</option>
+                                            <option value={t.studio.detail.options.vibe.rage}>{t.studio.detail.options.vibe.rage}</option>
+                                            <option value={t.studio.detail.options.vibe.chill}>{t.studio.detail.options.vibe.chill}</option>
+                                            <option value={t.studio.detail.options.vibe.epic}>{t.studio.detail.options.vibe.epic}</option>
                                         </select>
                                     </div>
                                     <div>
@@ -138,10 +138,10 @@ const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, on
                                             onChange={e => setScriptData({...scriptData, goal: e.target.value})}
                                             className="w-full bg-cyber-900 border border-cyber-700 rounded p-2 text-white text-sm outline-none focus:border-cyber-purple"
                                         >
-                                            <option>Engagement (Comments)</option>
-                                            <option>Viral (Shares)</option>
-                                            <option>Followers</option>
-                                            <option>Sales/Promo</option>
+                                            <option value={t.studio.detail.options.goal.engagement}>{t.studio.detail.options.goal.engagement}</option>
+                                            <option value={t.studio.detail.options.goal.viral}>{t.studio.detail.options.goal.viral}</option>
+                                            <option value={t.studio.detail.options.goal.followers}>{t.studio.detail.options.goal.followers}</option>
+                                            <option value={t.studio.detail.options.goal.sales}>{t.studio.detail.options.goal.sales}</option>
                                         </select>
                                     </div>
                                     <div>
@@ -150,7 +150,7 @@ const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, on
                                             value={scriptData.context}
                                             onChange={e => setScriptData({...scriptData, context: e.target.value})}
                                             className="w-full bg-cyber-900 border border-cyber-700 rounded p-2 text-white text-sm outline-none focus:border-cyber-purple h-24 resize-none"
-                                            placeholder="I landed in Tilted Towers and found a gold scar immediately..."
+                                            placeholder={lang === 'es' ? "Aterricé en Pisos Picados y encontré una Scar dorada..." : "I landed in Tilted Towers and found a gold scar immediately..."}
                                         />
                                     </div>
 
@@ -183,7 +183,7 @@ const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, on
                                     </div>
                                 ) : (
                                     <div className="h-full flex items-center justify-center text-gray-600 text-sm italic text-center">
-                                        AI Waiting for input...
+                                        {t.studio.detail.waiting}
                                     </div>
                                 )}
                             </div>
