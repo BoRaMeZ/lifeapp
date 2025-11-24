@@ -1,8 +1,21 @@
 
 export type Language = 'en' | 'es';
+export type Theme = 'cyber' | 'matrix' | 'sith';
 
 export type ProjectStatus = 'idea' | 'recording' | 'editing' | 'ready';
 export type Platform = 'twitch' | 'tiktok' | 'youtube' | 'kick';
+
+export interface UserProfile {
+  name: string;
+  avatar: string;
+}
+
+export interface ScriptData {
+  vibe: string;
+  context: string;
+  goal: string;
+  generatedContent?: string;
+}
 
 export interface ProjectCard {
   id: string;
@@ -11,6 +24,7 @@ export interface ProjectCard {
   platform: Platform;
   status: ProjectStatus;
   createdAt: number;
+  script?: ScriptData; // New: Stores the AI script
 }
 
 export interface AgendaItem {
@@ -57,10 +71,44 @@ export interface PlayerStats {
   lastLoginDate: string;
 }
 
+export interface BackupData {
+  streamos_stats: string | null;
+  streamos_agenda: string | null;
+  streamos_projects: string | null;
+  streamos_tasks: string | null;
+  streamos_profile: string | null;
+  streamos_lang: string | null;
+  streamos_theme: string | null;
+}
+
 export enum AppTab {
   DASHBOARD = 'DASHBOARD',
   AGENDA = 'AGENDA',
   STUDIO = 'STUDIO',
   BASE_OPS = 'BASE_OPS',
   AI_COACH = 'AI_COACH',
+}
+
+// --- Web Speech API Types ---
+export interface SpeechRecognition extends EventTarget {
+  grammars: any;
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  serviceURI: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: (event: any) => void;
+  onerror: (event: any) => void;
+  onend: (event: any) => void;
+  onstart: (event: any) => void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
 }

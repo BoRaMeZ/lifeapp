@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { PlayerStats, Language } from '../types';
-import { Activity, Zap, Trophy, Clock, Award, Lock } from 'lucide-react';
+import { PlayerStats, Language, UserProfile } from '../types';
+import { Activity, Zap, Trophy, Clock, Award, Lock, Settings } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { getTranslation } from '../utils/translations';
 import { translations } from '../utils/translations';
@@ -10,9 +10,11 @@ interface DashboardProps {
   stats: PlayerStats;
   lang: Language;
   badges: {id: string, unlocked: boolean}[];
+  userProfile: UserProfile;
+  onOpenSettings: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ stats, lang, badges }) => {
+const Dashboard: React.FC<DashboardProps> = ({ stats, lang, badges, userProfile, onOpenSettings }) => {
   const t = getTranslation(lang);
   const xpProgress = Math.min(100, (stats.currentXP / stats.nextLevelXP) * 100);
 
@@ -42,6 +44,23 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, lang, badges }) => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      
+      {/* Dynamic Header for Mobile (also visible on desktop in specific grid spot) */}
+      <div className="flex md:hidden items-center justify-between bg-cyber-800/50 p-4 rounded-xl border border-cyber-700/50">
+         <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-full bg-cyber-700 overflow-hidden border-2 border-cyber-cyan">
+                <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover"/>
+             </div>
+             <div>
+                 <h3 className="font-bold text-white leading-tight">{userProfile.name}</h3>
+                 <p className="text-xs text-cyber-cyan">Lvl {stats.level}</p>
+             </div>
+         </div>
+         <button onClick={onOpenSettings} className="p-2 text-gray-400 hover:text-white bg-cyber-900 rounded-lg">
+             <Settings size={20} />
+         </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Level Card */}
         <div className="bg-cyber-800 border border-cyber-cyan/30 rounded-xl p-6 relative overflow-hidden group">
@@ -134,9 +153,11 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, lang, badges }) => {
 
         {/* Badges / Achievements */}
         <div className="lg:col-span-2 bg-cyber-800 border border-cyber-700 rounded-xl p-6">
-            <h3 className="text-lg font-display text-white mb-4 flex items-center gap-2">
-                <Award className="text-cyber-purple" size={20}/> {t.dashboard.badges}
-            </h3>
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-display text-white flex items-center gap-2">
+                    <Award className="text-cyber-purple" size={20}/> {t.dashboard.badges}
+                </h3>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {badges.map((badge) => (
                     <div 

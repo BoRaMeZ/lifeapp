@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ProjectCard, ProjectStatus, Platform, Language } from '../types';
 import { Plus, ChevronLeft, ChevronRight, Video, Scissors, Upload, Smartphone, Trash2, Save, X } from 'lucide-react';
 import { getTranslation } from '../utils/translations';
+import StudioDetailModal from './StudioDetailModal';
 
 interface StudioProps {
   onGainXP: (amount: number) => void;
@@ -18,6 +19,9 @@ const Studio: React.FC<StudioProps> = ({ onGainXP, lang }) => {
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('');
   const [newPlatform, setNewPlatform] = useState<Platform>('tiktok');
+
+  // Detail Modal State
+  const [selectedProject, setSelectedProject] = useState<ProjectCard | null>(null);
 
   // Load from LocalStorage on mount
   useEffect(() => {
@@ -53,6 +57,10 @@ const Studio: React.FC<StudioProps> = ({ onGainXP, lang }) => {
     setNewTitle('');
     setNewCategory('');
     setIsModalOpen(false);
+  };
+
+  const updateProject = (updated: ProjectCard) => {
+      setProjects(prev => prev.map(p => p.id === updated.id ? updated : p));
   };
 
   const moveProject = (id: string, nextStatus: ProjectStatus) => {
@@ -98,7 +106,30 @@ const Studio: React.FC<StudioProps> = ({ onGainXP, lang }) => {
   };
 
   const deleteProject = (id: string) => {
-    setProjects(prev => prev.filter(p => p.id !== id));
+    const project = projects.find(p => p.id === id);
+    if (!project) return;
+    
+    // XP Subtraction Logic to prevent exploits
+    // Calculate total XP gained by this project based on its current status
+    // Idea (Creation): +10
+    // Recording: +0 (transition)
+    // Editing: +20
+    // Ready: +50
+    
+    if (confirm(t.studio.actions.confirmDelete)) {
+        let xpToDeduct = 10; // Base creation XP
+
+        if (project.status === 'editing' || project.status === 'ready') {
+            xpToDeduct += 20;
+        }
+        if (project.status === 'ready') {
+            xpToDeduct += 50;
+        }
+
+        // Apply deduction
+        onGainXP(-xpToDeduct);
+        setProjects(prev => prev.filter(p => p.id !== id));
+    }
   };
 
   // --- RENDERING HELPERS ---
@@ -130,7 +161,11 @@ const Studio: React.FC<StudioProps> = ({ onGainXP, lang }) => {
                     </div>
                 )}
                 {colProjects.map((p) => (
-                    <div key={p.id} className="bg-cyber-800 p-4 rounded-lg border border-cyber-700 shadow-lg group hover:border-cyber-cyan/50 transition-colors relative">
+                    <div 
+                        key={p.id} 
+                        onClick={() => setSelectedProject(p)}
+                        className="bg-cyber-800 p-4 rounded-lg border border-cyber-700 shadow-lg group hover:border-cyber-cyan/50 hover:bg-cyber-700/50 transition-all cursor-pointer relative"
+                    >
                         <div className="flex justify-between items-start mb-2">
                             <span className="text-xs font-mono text-cyber-cyan bg-cyber-900/80 px-1.5 py-0.5 rounded">{p.category}</span>
                             {getPlatformIcon(p.platform)}
@@ -138,17 +173,17 @@ const Studio: React.FC<StudioProps> = ({ onGainXP, lang }) => {
                         <h4 className="font-medium text-gray-100 text-sm leading-tight mb-4">{p.title}</h4>
                         
                         <div className="flex justify-between items-center mt-2 pt-2 border-t border-cyber-700/50">
-                            {/* DELETE ACTION */}
+                            {/* DELETE ACTION - Stop Propagation to prevent opening modal */}
                             <button 
-                                onClick={() => deleteProject(p.id)}
+                                onClick={(e) => { e.stopPropagation(); deleteProject(p.id); }}
                                 className="text-gray-600 hover:text-red-500 transition-colors p-1.5"
                                 title={t.studio.actions.delete}
                             >
                                 <Trash2 size={16} />
                             </button>
 
-                            {/* MOVE ACTIONS */}
-                            <div className="flex gap-2">
+                            {/* MOVE ACTIONS - Stop Propagation */}
+                            <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                                 {/* MOVE BACK */}
                                 {status !== 'idea' && (
                                     <button 
@@ -264,6 +299,16 @@ const Studio: React.FC<StudioProps> = ({ onGainXP, lang }) => {
                   </div>
               </div>
           </div>
+      )}
+
+      {/* DEEP DIVE MODAL */}
+      {selectedProject && (
+          <StudioDetailModal 
+            project={selectedProject} 
+            lang={lang} 
+            onClose={() => setSelectedProject(null)} 
+            onUpdate={updateProject}
+          />
       )}
     </div>
   );

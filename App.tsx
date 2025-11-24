@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { AppTab, PlayerStats, Language, Badge } from './types';
+import { AppTab, PlayerStats, Language, Badge, UserProfile, AgendaItem, DailyTask, Theme } from './types';
 import Dashboard from './components/Dashboard';
 import Agenda from './components/Agenda';
 import Studio from './components/Studio';
 import BaseOps from './components/BaseOps';
 import AICoach from './components/AICoach';
-import { LayoutDashboard, Calendar, Video, Home, MessageSquare, Terminal, Globe, Award } from 'lucide-react';
+import SettingsModal from './components/SettingsModal';
+import LevelUpModal from './components/LevelUpModal';
+import { LayoutDashboard, Calendar, Video, Home, MessageSquare, Terminal, Globe, Award, Settings } from 'lucide-react';
 import { getTranslation } from './utils/translations';
 
 // --- INITIAL DATA & UTILS ---
@@ -19,6 +21,27 @@ const INITIAL_STATS: PlayerStats = {
   lastLoginDate: new Date().toDateString(),
 };
 
+const INITIAL_PROFILE: UserProfile = {
+  name: "Ninja Urbano",
+  avatar: "https://cdn-icons-png.flaticon.com/512/3959/3959542.png"
+};
+
+const DEFAULT_SCHEDULE_TEMPLATE: AgendaItem[] = [
+    { id: '1', startTime: '08:30', endTime: '19:30', title: 'The Grind (Work)', desc: 'Keep head down. Save energy.', type: 'work', completed: false, xpReward: 50 },
+    { id: '2', startTime: '19:30', endTime: '20:30', title: 'Transit', desc: 'Podcast / Music', type: 'transit', completed: false, xpReward: 10 },
+    { id: '3', startTime: '20:30', endTime: '21:00', title: 'Base Ops', desc: 'Shower & Reset', type: 'base', completed: false, xpReward: 20 },
+    { id: '4', startTime: '21:00', endTime: '22:00', title: 'Creative Block', desc: 'Focus Mode', type: 'creative', completed: false, xpReward: 100 },
+    { id: '5', startTime: '22:00', endTime: '23:00', title: 'Shutdown', desc: 'Sleep prep', type: 'sleep', completed: false, xpReward: 10 },
+];
+
+const DEFAULT_TASKS_TEMPLATE: DailyTask[] = [
+    { id: 't1', title: 'Dishes Cleared', translationKey: 't1', xp: 25, completed: false, category: 'home' },
+    { id: 't2', title: 'Backpack Packed', translationKey: 't2', xp: 20, completed: false, category: 'admin' },
+    { id: 't3', title: 'Outfit Laid Out', translationKey: 't3', xp: 15, completed: false, category: 'admin' },
+    { id: 't4', title: 'Drink Water', translationKey: 't4', xp: 10, completed: false, category: 'health' },
+    { id: 't5', title: 'Desk Wipe', translationKey: 't5', xp: 30, completed: false, category: 'home' },
+];
+
 const BADGES_DEF = [
   { id: 'streak3', icon: '🔥', translationKey: 'streak3', condition: (s: PlayerStats) => s.streak >= 3 },
   { id: 'streak7', icon: '⚡', translationKey: 'streak7', condition: (s: PlayerStats) => s.streak >= 7 },
@@ -29,36 +52,53 @@ const BADGES_DEF = [
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.DASHBOARD);
   const [lang, setLang] = useState<Language>('es');
+  const [theme, setTheme] = useState<Theme>('cyber');
   
   // -- PERSISTENT STATE --
   const [stats, setStats] = useState<PlayerStats>(INITIAL_STATS);
+  const [userProfile, setUserProfile] = useState<UserProfile>(INITIAL_PROFILE);
   const [badges, setBadges] = useState<{id: string, unlocked: boolean}[]>([]);
+  
+  // Lifted State for AI manipulation
+  const [agendaItems, setAgendaItems] = useState<AgendaItem[]>([]);
+  const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
+
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // -- MODAL STATE --
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showLevelUp, setShowLevelUp] = useState(false);
 
   // 1. LOAD DATA ON MOUNT
   useEffect(() => {
     const savedStats = localStorage.getItem('streamos_stats');
     const savedLang = localStorage.getItem('streamos_lang') as Language;
+    const savedTheme = localStorage.getItem('streamos_theme') as Theme;
+    const savedProfile = localStorage.getItem('streamos_profile');
     
-    if (savedLang) setLang(savedLang);
+    // Load Agenda
+    const savedAgenda = localStorage.getItem('streamos_agenda');
+    const lastAgendaDate = localStorage.getItem('streamos_agenda_date');
+    // Load Tasks
+    const savedTasks = localStorage.getItem('streamos_tasks');
+    const lastTaskDate = localStorage.getItem('streamos_tasks_date');
 
+    const today = new Date().toDateString();
+
+    if (savedLang) setLang(savedLang);
+    if (savedTheme) setTheme(savedTheme);
+    if (savedProfile) setUserProfile(JSON.parse(savedProfile));
+
+    // Stats Logic
     if (savedStats) {
       const parsedStats: PlayerStats = JSON.parse(savedStats);
-      
-      // STREAK LOGIC
-      const today = new Date().toDateString();
       const lastLogin = parsedStats.lastLoginDate;
       const yesterday = new Date(Date.now() - 86400000).toDateString();
-
       let newStreak = parsedStats.streak;
 
       if (lastLogin !== today) {
-        if (lastLogin === yesterday) {
-          newStreak += 1;
-        } else {
-          newStreak = 1; // Streak reset
-        }
-        // Update stats with new date and streak
+        if (lastLogin === yesterday) newStreak += 1;
+        else newStreak = 1;
         const updatedStats = { ...parsedStats, streak: newStreak, lastLoginDate: today };
         setStats(updatedStats);
         localStorage.setItem('streamos_stats', JSON.stringify(updatedStats));
@@ -66,32 +106,76 @@ const App: React.FC = () => {
         setStats(parsedStats);
       }
     } else {
-      // First time user
       localStorage.setItem('streamos_stats', JSON.stringify(INITIAL_STATS));
+    }
+
+    // Agenda Logic (Reset Daily)
+    if (savedAgenda) {
+        let parsed: AgendaItem[] = JSON.parse(savedAgenda);
+        if (lastAgendaDate !== today) {
+            parsed = parsed.map(i => ({ ...i, completed: false }));
+            localStorage.setItem('streamos_agenda_date', today);
+        }
+        setAgendaItems(parsed);
+    } else {
+        setAgendaItems(DEFAULT_SCHEDULE_TEMPLATE);
+        localStorage.setItem('streamos_agenda_date', today);
+    }
+
+    // Tasks Logic (Reset Daily)
+    if (savedTasks) {
+        let parsed: DailyTask[] = JSON.parse(savedTasks);
+        if (lastTaskDate !== today) {
+            parsed = parsed.map(t => ({ ...t, completed: false }));
+            localStorage.setItem('streamos_tasks_date', today);
+        }
+        setDailyTasks(parsed);
+    } else {
+        setDailyTasks(DEFAULT_TASKS_TEMPLATE);
+        localStorage.setItem('streamos_tasks_date', today);
     }
     
     setIsInitialized(true);
   }, []);
 
-  // 2. SAVE STATS ON CHANGE & CHECK BADGES
+  // 2. SAVE EFFECTS
   useEffect(() => {
     if (!isInitialized) return;
     localStorage.setItem('streamos_stats', JSON.stringify(stats));
-
-    // Check Badges
+    // Badge Check
     const newBadges = BADGES_DEF.map(def => ({
       id: def.id,
       unlocked: def.condition(stats)
     }));
     setBadges(newBadges);
-
   }, [stats, isInitialized]);
 
-  // 3. SAVE LANG ON CHANGE
   useEffect(() => {
     localStorage.setItem('streamos_lang', lang);
   }, [lang]);
 
+  useEffect(() => {
+      localStorage.setItem('streamos_theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    localStorage.setItem('streamos_profile', JSON.stringify(userProfile));
+  }, [userProfile, isInitialized]);
+
+  // Save Agenda & Tasks whenever they change
+  useEffect(() => {
+    if (!isInitialized) return;
+    localStorage.setItem('streamos_agenda', JSON.stringify(agendaItems));
+  }, [agendaItems, isInitialized]);
+
+  useEffect(() => {
+      if (!isInitialized) return;
+      localStorage.setItem('streamos_tasks', JSON.stringify(dailyTasks));
+  }, [dailyTasks, isInitialized]);
+
+
+  // --- GAMIFICATION CORE ---
   const t = getTranslation(lang);
 
   const gainXP = (amount: number) => {
@@ -99,23 +183,21 @@ const App: React.FC = () => {
       let newXP = prev.currentXP + amount;
       let newLevel = prev.level;
       let nextXP = prev.nextLevelXP;
+      let leveledUp = false;
 
-      // Level up logic
       if (newXP >= nextXP) {
         newXP = newXP - nextXP;
         newLevel += 1;
         nextXP = Math.floor(nextXP * 1.5);
+        leveledUp = true;
       }
-
-      // Prevent negative XP (simplification: don't de-level, just floor at 0)
       if (newXP < 0) newXP = 0;
 
-      return {
-        ...prev,
-        level: newLevel,
-        currentXP: newXP,
-        nextLevelXP: nextXP
-      };
+      if (leveledUp) {
+        setTimeout(() => setShowLevelUp(true), 500);
+      }
+
+      return { ...prev, level: newLevel, currentXP: newXP, nextLevelXP: nextXP };
     });
   };
 
@@ -126,17 +208,42 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case AppTab.DASHBOARD:
-        return <Dashboard stats={stats} badges={badges} lang={lang} />;
+        return <Dashboard 
+          stats={stats} 
+          badges={badges} 
+          lang={lang} 
+          userProfile={userProfile}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />;
       case AppTab.AGENDA:
-        return <Agenda lang={lang} onGainXP={gainXP} />;
+        return <Agenda 
+            lang={lang} 
+            onGainXP={gainXP} 
+            items={agendaItems} 
+            setItems={setAgendaItems} 
+        />;
       case AppTab.STUDIO:
         return <Studio onGainXP={gainXP} lang={lang} />;
       case AppTab.BASE_OPS:
-        return <BaseOps onGainXP={gainXP} lang={lang} />;
+        return <BaseOps 
+            onGainXP={gainXP} 
+            lang={lang} 
+            tasks={dailyTasks} 
+            setTasks={setDailyTasks} 
+        />;
       case AppTab.AI_COACH:
-        return <AICoach lang={lang} stats={stats} />;
+        return <AICoach 
+            lang={lang} 
+            stats={stats} 
+            userProfile={userProfile} 
+            agenda={agendaItems}
+            tasks={dailyTasks}
+            onUpdateAgenda={setAgendaItems}
+            onUpdateTasks={setDailyTasks}
+            onGainXP={gainXP}
+        />;
       default:
-        return <Dashboard stats={stats} badges={badges} lang={lang} />;
+        return <Dashboard stats={stats} badges={badges} lang={lang} userProfile={userProfile} onOpenSettings={() => setIsSettingsOpen(true)} />;
     }
   };
 
@@ -151,7 +258,7 @@ const App: React.FC = () => {
   if (!isInitialized) return <div className="min-h-screen bg-[#050b14] flex items-center justify-center text-cyber-cyan font-mono">LOADING SYSTEM...</div>;
 
   return (
-    <div className="min-h-screen bg-[#050b14] text-gray-200 font-sans selection:bg-cyber-cyan selection:text-black">
+    <div className={`theme-${theme} min-h-screen bg-cyber-900 text-gray-200 font-sans selection:bg-cyber-cyan selection:text-black transition-colors duration-500`}>
       {/* Mobile Header */}
       <div className="md:hidden bg-cyber-900 border-b border-cyber-700 p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2">
@@ -183,8 +290,24 @@ const App: React.FC = () => {
             </div>
             <div>
                 <h1 className="font-display font-bold text-xl text-white tracking-wider">STREAM.OS</h1>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest">v3.1.0 BETA</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest">v4.0.0 ELITE</p>
             </div>
+          </div>
+
+          <div className="mb-6 px-2 flex items-center gap-3 bg-cyber-800/50 p-3 rounded-xl border border-cyber-700/50">
+              <div className="w-10 h-10 rounded-full bg-cyber-700 overflow-hidden border-2 border-cyber-cyan">
+                  <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover"/>
+              </div>
+              <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-white truncate">{userProfile.name}</h3>
+                  <p className="text-[10px] text-cyber-green flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyber-green animate-pulse"></span>
+                      Online
+                  </p>
+              </div>
+              <button onClick={() => setIsSettingsOpen(true)} className="text-gray-400 hover:text-white">
+                  <Settings size={16} />
+              </button>
           </div>
 
           <nav className="space-y-2 flex-1">
@@ -197,7 +320,7 @@ const App: React.FC = () => {
                   onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                     isActive 
-                      ? 'bg-cyber-cyan text-black font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)]' 
+                      ? 'bg-cyber-cyan text-black font-bold shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.4)]' 
                       : 'text-gray-400 hover:bg-cyber-800 hover:text-white'
                   }`}
                 >
@@ -209,7 +332,6 @@ const App: React.FC = () => {
             })}
           </nav>
 
-          {/* Language Toggle Desktop */}
           <div className="mb-4 px-2">
              <button 
                 onClick={toggleLanguage}
@@ -243,10 +365,9 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
-            {/* Background Grid Effect */}
             <div className="fixed inset-0 pointer-events-none opacity-5" 
                 style={{
-                    backgroundImage: 'linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px)',
+                    backgroundImage: 'linear-gradient(var(--color-primary) 1px, transparent 1px), linear-gradient(90deg, var(--color-primary) 1px, transparent 1px)',
                     backgroundSize: '40px 40px'
                 }}
             />
@@ -258,10 +379,9 @@ const App: React.FC = () => {
                             {navItems.find(n => n.id === activeTab)?.label}
                         </h2>
                         <p className="text-gray-400 text-sm mt-1">
-                           System Status: <span className="text-green-400">Operational</span>
+                           System Status: <span className="text-cyber-green">Operational</span>
                         </p>
                     </div>
-                    {/* Desktop Date Display */}
                     <div className="hidden md:block text-right">
                         <div className="text-2xl font-mono text-gray-200">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                         <div className="text-xs text-cyber-purple uppercase font-bold">
@@ -293,6 +413,26 @@ const App: React.FC = () => {
               );
             })}
         </nav>
+
+        {/* MODALS */}
+        <SettingsModal 
+            isOpen={isSettingsOpen} 
+            onClose={() => setIsSettingsOpen(false)} 
+            userProfile={userProfile}
+            onUpdateProfile={setUserProfile}
+            lang={lang}
+            theme={theme}
+            onSetTheme={setTheme}
+        />
+        
+        {showLevelUp && (
+          <LevelUpModal 
+            newLevel={stats.level} 
+            lang={lang} 
+            onClose={() => setShowLevelUp(false)} 
+          />
+        )}
+
       </div>
     </div>
   );

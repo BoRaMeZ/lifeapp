@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -23,13 +24,13 @@
             },
             colors: {
               cyber: {
-                900: '#0f172a',
-                800: '#1e293b',
-                700: '#334155',
-                cyan: '#06b6d4',
-                purple: '#8b5cf6',
-                pink: '#ec4899',
-                green: '#10b981',
+                900: '#050b14', // Base Background (Darkest)
+                800: '#0f172a', // Card Background
+                700: '#1e293b', // Border/Hover
+                cyan: 'var(--color-primary)',   // Dynamic Primary
+                purple: 'var(--color-secondary)', // Dynamic Secondary
+                pink: 'var(--color-accent)',      // Dynamic Accent
+                green: '#10b981', // Success (Static)
               }
             }
           }
@@ -37,10 +38,29 @@
       }
     </script>
     <style>
+      :root {
+        /* Default Theme (Cyberpunk) */
+        --color-primary: #06b6d4;   /* Cyan */
+        --color-secondary: #8b5cf6; /* Purple */
+        --color-accent: #ec4899;    /* Pink */
+      }
+
+      .theme-matrix {
+        --color-primary: #22c55e;   /* Green */
+        --color-secondary: #15803d; /* Dark Green */
+        --color-accent: #ffffff;    /* White */
+      }
+
+      .theme-sith {
+        --color-primary: #ef4444;   /* Red */
+        --color-secondary: #991b1b; /* Dark Red */
+        --color-accent: #f59e0b;    /* Orange */
+      }
+
       body {
         background-color: #050b14;
         color: #e2e8f0;
-        overscroll-behavior-y: none; /* Previene el efecto de rebote en movil */
+        overscroll-behavior-y: none;
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
@@ -50,8 +70,12 @@
         background: #0f172a; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #334155; 
+        background: var(--color-primary); 
         border-radius: 4px;
+      }
+      
+      .animate-pulse-slow {
+        animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
       }
     </style>
 <script type="importmap">

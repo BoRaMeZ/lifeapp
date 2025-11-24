@@ -1,43 +1,101 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { Language, PlayerStats } from "../types";
+import { Language, PlayerStats, ProjectCard, AgendaItem, UserProfile, DailyTask, ScriptData } from "../types";
 
 const SYSTEM_INSTRUCTION_BASE = `
-You are "StreamOS," a strategic productivity AI assistant for a user who works 8:30 AM - 7:30 PM and wants to become a streamer.
-The user only has free time from 9:00 PM to 11:00 PM on weekdays, and weekends.
-Your goal is to help them manage energy, not just time.
-1. Be concise, tactical, and motivational. Use gaming metaphors (XP, leveling up, grinding, missions).
-2. For weekday requests, prioritize "Low Energy" tasks like organizing files, cutting simple clips, or planning.
-3. For weekend requests, prioritize "High Energy" tasks like Streaming (Sat/Sun 10 PM) or heavy editing.
-4. If the user feels overwhelmed, suggest the "Kanban" method: move one small card today.
-5. Always remind them that consistency > intensity.
+You are "StreamOS," an elite productivity AI Agent for a streamer with a full-time job.
+You have READ/WRITE access to the user's Agenda and Tasks.
+
+CAPABILITIES:
+1. **Analyze**: Read user data to give tactical advice.
+2. **Execute**: You can MODIFY the app state by returning a JSON block.
+
+AVAILABLE ACTIONS (Return inside \`\`\`json\`\`\` block):
+
+A. **CREATE_AGENDA**: Replace the entire daily schedule.
+   Use when user says "Plan my day" or "Reset schedule".
+   Structure:
+   {
+     "action": "CREATE_AGENDA",
+     "payload": [
+       { "startTime": "21:00", "endTime": "21:45", "title": "...", "desc": "...", "type": "creative", "xpReward": 50 }
+     ]
+   }
+
+B. **ADD_TASK**: Add a single task to Base Ops.
+   Use when user says "Remind me to call mom" or "Add task".
+   Structure:
+   {
+     "action": "ADD_TASK",
+     "payload": { "title": "...", "category": "admin", "xp": 15 }
+   }
+
+C. **COMPLETE_TASK**: Mark a task as done by searching its title (fuzzy match).
+   Use when user says "I drank water" or "Done with dishes".
+   Structure:
+   {
+     "action": "COMPLETE_TASK",
+     "payload": { "searchTitle": "water" }
+   }
+
+RULES:
+- If executing an action, output the JSON block at the END of your response.
+- Keep the text response concise and "Gamer/Cyberpunk" themed.
+- Types for Agenda: 'work', 'creative', 'transit', 'base', 'learning', 'sleep'.
 `;
 
 export const sendMessageToGemini = async (
   history: { role: string; text: string }[], 
   message: string, 
   lang: Language,
-  stats?: PlayerStats
+  stats?: PlayerStats,
+  projects?: ProjectCard[],
+  agenda?: AgendaItem[],
+  tasks?: DailyTask[],
+  userProfile?: UserProfile
 ): Promise<string> => {
   try {
-    // Initialize standard Google GenAI client
-    // The key is now injected via vite.config.ts define
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     // Add language instruction
     const langInstruction = lang === 'es' 
-      ? "IMPORTANT: RESPOND ONLY IN SPANISH." 
-      : "IMPORTANT: RESPOND ONLY IN ENGLISH.";
+      ? "IMPORTANT: RESPOND IN SPANISH." 
+      : "IMPORTANT: RESPOND IN ENGLISH.";
 
-    // Add stats context
-    let statsContext = "";
-    if (stats) {
-        statsContext = `\nCURRENT USER STATS: Level ${stats.level}, XP ${stats.currentXP}, Streak ${stats.streak} days. Use this data to motivate them (e.g., "Protect your ${stats.streak}-day streak!").`;
+    // Build the Context Payload
+    let contextData = "";
+    
+    if (userProfile) {
+        contextData += `\nUSER PROFILE: Name: ${userProfile.name}`;
     }
 
-    const finalSystemInstruction = `${SYSTEM_INSTRUCTION_BASE}\n${langInstruction}\n${statsContext}`;
+    if (stats) {
+        contextData += `\nSTATS: Level ${stats.level}, XP ${stats.currentXP}, Streak ${stats.streak} days.`;
+    }
+
+    if (projects) {
+        const ideas = projects.filter(p => p.status === 'idea').map(p => p.title).join(', ');
+        const recording = projects.filter(p => p.status === 'recording').map(p => p.title).join(', ');
+        const editing = projects.filter(p => p.status === 'editing').map(p => p.title).join(', ');
+        
+        contextData += `\nKANBAN STATUS:
+        - Ideas: [${ideas}]
+        - Recording: [${recording}]
+        - Editing: [${editing}]`;
+    }
+
+    if (agenda) {
+        const agendaSummary = agenda.map(i => `${i.startTime}-${i.endTime}: ${i.title} (${i.completed ? 'DONE' : 'PENDING'})`).join('\n');
+        contextData += `\nCURRENT AGENDA:\n${agendaSummary}`;
+    }
+
+    if (tasks) {
+        const tasksSummary = tasks.map(t => `- ${t.title} (${t.completed ? 'DONE' : 'PENDING'})`).join('\n');
+        contextData += `\nBASE OPS TASKS:\n${tasksSummary}`;
+    }
+
+    const finalSystemInstruction = `${SYSTEM_INSTRUCTION_BASE}\n${langInstruction}\n\n=== LIVE SYSTEM DATA ===${contextData}`;
     
-    // Using gemini-2.5-flash as requested
     const model = 'gemini-2.5-flash';
     
     const chat = ai.chats.create({
@@ -45,7 +103,6 @@ export const sendMessageToGemini = async (
       config: {
         systemInstruction: finalSystemInstruction,
       },
-      // Pass history correctly to the chat session
       history: history.map(h => ({
         role: h.role,
         parts: [{ text: h.text }]
@@ -56,11 +113,54 @@ export const sendMessageToGemini = async (
       message: message 
     });
 
-    return result.text || (lang === 'es' ? "Sistema Offline. Sin respuesta." : "System Offline. No response received.");
+    return result.text || (lang === 'es' ? "Sistema Offline." : "System Offline.");
   } catch (error) {
     console.error("Gemini Error:", error);
     return lang === 'es' 
-      ? "Fallo Crítico: No se puede conectar a la Red Neuronal (Error de API)." 
-      : "Critical Failure: Unable to connect to Neural Network (API Error).";
+      ? "Error de conexión con el Núcleo de IA." 
+      : "Connection failure with AI Core.";
   }
 };
+
+export const generateVideoScript = async (
+  project: ProjectCard, 
+  scriptData: ScriptData, 
+  lang: Language
+): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const model = 'gemini-2.5-flash';
+
+        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
+        
+        const prompt = `
+        ACT AS A VIRAL CONTENT SCREENWRITER FOR ${project.platform.toUpperCase()}.
+        ${langInstruction}
+        
+        PROJECT: "${project.title}"
+        CATEGORY: ${project.category}
+        
+        CONTEXT/IDEA: ${scriptData.context}
+        VIBE: ${scriptData.vibe}
+        GOAL: ${scriptData.goal}
+        
+        OUTPUT FORMAT:
+        Write a concise script with 3 sections:
+        1. **HOOK (0-3s)**: Grab attention immediately.
+        2. **BODY**: The main content/story. Keep it tight.
+        3. **CTA**: Call to action based on the goal.
+        
+        Use markdown. Keep it ready to read while recording.
+        `;
+
+        const result = await ai.models.generateContent({
+            model: model,
+            contents: prompt
+        });
+
+        return result.text || (lang === 'es' ? "Error al generar guion." : "Error generating script.");
+    } catch (e) {
+        console.error("Script Gen Error", e);
+        return lang === 'es' ? "Error de conexión." : "Connection Error.";
+    }
+}

@@ -1,5 +1,5 @@
 
-StreamLife OS v3.1.0 - DOCUMENTACIÓN TÉCNICA Y DE DISEÑO
+StreamLife OS v3.2.1 - DOCUMENTACIÓN TÉCNICA Y DE DISEÑO
 =========================================================
 
 1. VISIÓN Y CONCEPTO
@@ -38,6 +38,7 @@ El núcleo de la app es transformar tareas aburridas en "Misiones" que otorgan r
 
 A. Sistema de XP (Experiencia)
    - Fórmula de Nivel: El XP necesario para el siguiente nivel aumenta progresivamente (NextLevelXP * 1.5).
+   - LEVEL UP: Animación visual épica (LevelUpModal) al cruzar el umbral de XP.
    - Fuentes de XP:
      * Tareas Domésticas (Base Ops): +10 a +30 XP.
      * Agenda (Bloques de Tiempo): +10 (Tránsito) a +100 XP (Creativo).
@@ -48,6 +49,7 @@ B. Economía Reversible (Anti-Exploit)
      * Desmarcar tarea en Agenda/BaseOps: Resta la XP otorgada.
      * Borrar tarea completada: Resta la XP antes de eliminarla.
      * Retroceder proyecto en Studio: Resta la XP de la etapa avanzada.
+     * Borrar Proyecto en Studio: Calcula el valor total de XP que tenía esa tarjeta y lo resta.
    - Protección de Nivel: El sistema impide que la XP actual baje de 0 visualmente.
 
 C. Sistema de Rachas (Streak)
@@ -65,8 +67,9 @@ D. Logros (Badges)
 
 A. DASHBOARD (Centro de Mando)
    - Visualización de Stats: Nivel, Barra de Progreso, Racha actual.
+   - Perfil de Usuario: Nombre clave y Avatar personalizable desde Settings.
    - Próximo Bloque: Muestra la siguiente actividad agendada según la hora del sistema.
-   - Gráficos: Distribución de XP (PieChart usando Recharts) con corrección de redimensionamiento (-1 width bug fix).
+   - Gráficos: Distribución de XP (PieChart usando Recharts).
    - Vitrina de Trofeos: Muestra los Badges desbloqueados y bloqueados.
 
 B. AGENDA (Línea Temporal Táctica)
@@ -76,54 +79,51 @@ B. AGENDA (Línea Temporal Táctica)
      * Pasado/Completado: Opaco, tachado, verde.
      * Pendiente: Brillante, con borde de color según tipo.
    - Persistencia: Se guarda en localStorage ('streamos_agenda').
-   - Reinicio Diario: Las tareas se desmarcan automáticamente al cambiar de día, pero la estructura del horario se mantiene.
+   - Reinicio Diario: Las tareas se desmarcan automáticamente al cambiar de día.
 
 C. STUDIO (Tablero Kanban Interactivo)
    - Flujo de Trabajo: Idea <-> Grabación <-> Edición <-> Listo.
-   - Mecánica de Avance: Botones contextuales (iconos) para mover tarjetas a la derecha (+XP).
-   - Mecánica de Retroceso (Rollback):
-     * Permite devolver una tarjeta a la columna anterior si hubo un error o replanificación.
-     * Incluye confirmación de seguridad (confirm dialog).
-     * Aplica penalización de XP (resta lo ganado) para evitar farming infinito.
-   - Gestión: Eliminación de proyectos y creación con metadatos (Título, Categoría, Plataforma).
+   - Mecánica de Avance: Botones contextuales para mover tarjetas (+XP).
+   - Mecánica de Retroceso/Borrado (Seguridad):
+     * Mover atrás: Resta la XP ganada en el paso anterior.
+     * Borrar proyecto: Calcula la "vida" del proyecto y resta toda la XP ganada antes de borrarlo.
    - Identidad Visual: Iconos para Twitch (Morado), TikTok (Rosa), YouTube (Rojo), Kick (Verde).
 
 D. BASE OPS (Mantenimiento)
-   - Concepto: Tareas repetitivas diarias (limpieza, salud) necesarias para no "quemarse".
+   - Concepto: Tareas repetitivas diarias (limpieza, salud).
+   - Personalización: Totalmente editable (CRUD). Puedes crear tus propias rutinas con XP personalizada y borrarlas.
+   - Priorización: Flechas Arriba/Abajo para ordenar la lista según importancia personal.
    - Barra de Progreso: Visualiza qué porcentaje del mantenimiento diario está hecho.
-   - Reinicio Diario: Lógica estricta que borra el progreso a las 00:00.
+   - Reinicio Diario: Lógica estricta que borra el progreso a las 00:00, manteniendo la lista de tareas personalizada.
 
-E. AI COACH (Estratega Personal)
+E. AI COACH (Estratega Personal + AGENTE)
    - Motor: Google Gemini 2.5 Flash API.
-   - Contexto Inyectado: La IA recibe el Nivel, XP y Racha del usuario en el "System Prompt".
-   - Personalidad: "StreamOS", un asistente táctico y motivacional. Usa metáforas de gaming.
-   - Bilingüe: Capacidad de responder en Inglés o Español según la configuración global.
+   - Contexto Inyectado: La IA recibe el Nivel, XP y Racha del usuario.
+   - Capacidades de Agente: Puede crear Agenda, Añadir Tareas y Completar Tareas automáticamente.
+   - Entrada de Voz (NUEVO): Integración con Web Speech API para dictar comandos.
+   - Bilingüe: Capacidad de responder en Inglés o Español.
+
+F. SYSTEM SETTINGS (Configuración)
+   - Perfil: Edición de Nombre y Avatar.
+   - Backup:
+     * Exportar: Genera un archivo .JSON con toda la base de datos local.
+     * Importar: Restaura los datos desde el archivo. Útil para mover datos de PC a Móvil.
+   - Danger Zone: Reinicio de XP o Reseteo de Fábrica.
 
 5. ASPECTOS TÉCNICOS Y PERSISTENCIA DE DATOS
 --------------------------------------------
 A. Almacenamiento Local (LocalStorage)
-   La app no requiere base de datos externa. Todo vive en el navegador del usuario:
-   - 'streamos_stats': Nivel, XP, Racha.
-   - 'streamos_agenda': Bloques de tiempo personalizados.
-   - 'streamos_projects': Tarjetas del Kanban.
-   - 'streamos_tasks': Estado de las tareas diarias.
-   - 'streamos_lang': Preferencia de idioma.
+   La app no requiere base de datos externa. Todo vive en el navegador del usuario.
+   Claves principales: 'streamos_stats', 'streamos_agenda', 'streamos_projects', 'streamos_tasks', 'streamos_profile'.
 
 B. Internacionalización (i18n)
    - Sistema propio de traducción en 'utils/translations.ts'.
-   - Cambio en tiempo real sin recargar la página.
    - Afecta a toda la UI, modales, alertas y a las respuestas de la IA.
 
 C. Responsive Design
    - Desktop: Barra lateral fija (Sidebar).
    - Mobile: Barra de navegación inferior (Bottom Nav) estilo app nativa.
    - Grid adaptable en Dashboard.
-
-6. MANTENIMIENTO Y DEBUGGING
-----------------------------
-- Para reiniciar la cuenta completa (Factory Reset):
-  Abrir consola del navegador (F12) -> Application -> Local Storage -> Click derecho "Clear" -> Recargar página.
-- Si el gráfico no carga: Verificar que el contenedor padre tenga un ancho definido (bug de CSS Grid solucionado con min-w-0).
 
 =========================================================
 FIN DE DOCUMENTACIÓN

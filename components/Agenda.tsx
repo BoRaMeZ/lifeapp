@@ -1,18 +1,21 @@
 
-import React, { useState, useEffect } from 'react';
-import { Clock, Briefcase, Video, Moon, Coffee, Plus, Trash2, CheckCircle, Circle, Brain } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, Briefcase, Video, Moon, Coffee, Plus, Trash2, CheckCircle, Circle, Brain, Zap } from 'lucide-react';
 import { Language, AgendaItem } from '../types';
 import { getTranslation } from '../utils/translations';
+import FocusMode from './FocusMode';
 
 interface AgendaProps {
   lang: Language;
   onGainXP: (amount: number) => void;
+  items: AgendaItem[];
+  setItems: React.Dispatch<React.SetStateAction<AgendaItem[]>>;
 }
 
-const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP }) => {
+const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP, items, setItems }) => {
   const t = getTranslation(lang);
-  const [items, setItems] = useState<AgendaItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeFocusItem, setActiveFocusItem] = useState<AgendaItem | null>(null);
 
   // Form State
   const [newItem, setNewItem] = useState<{
@@ -29,52 +32,12 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP }) => {
     type: 'work'
   });
 
-  // Default schedule for first time users
-  const DEFAULT_SCHEDULE: AgendaItem[] = [
-    { id: '1', startTime: '08:30', endTime: '19:30', title: t.agenda.items.work.title, desc: t.agenda.items.work.desc, type: 'work', completed: false, xpReward: 50 },
-    { id: '2', startTime: '19:30', endTime: '20:30', title: t.agenda.items.transit.title, desc: t.agenda.items.transit.desc, type: 'transit', completed: false, xpReward: 10 },
-    { id: '3', startTime: '20:30', endTime: '21:00', title: t.agenda.items.base.title, desc: t.agenda.items.base.desc, type: 'base', completed: false, xpReward: 20 },
-    { id: '4', startTime: '21:00', endTime: '21:45', title: t.agenda.items.creative.title, desc: t.agenda.items.creative.desc, type: 'creative', completed: false, xpReward: 100 },
-    { id: '5', startTime: '21:45', endTime: '22:30', title: t.agenda.items.learning.title, desc: t.agenda.items.learning.desc, type: 'learning', completed: false, xpReward: 30 },
-    { id: '6', startTime: '22:30', endTime: '23:00', title: t.agenda.items.sleep.title, desc: t.agenda.items.sleep.desc, type: 'sleep', completed: false, xpReward: 10 },
-  ];
-
-  // Load Data & Reset if needed
-  useEffect(() => {
-    const savedAgenda = localStorage.getItem('streamos_agenda');
-    const lastDate = localStorage.getItem('streamos_agenda_date');
-    const today = new Date().toDateString();
-
-    if (savedAgenda) {
-      let parsedItems: AgendaItem[] = JSON.parse(savedAgenda);
-      
-      // Daily Reset of 'completed' status
-      if (lastDate !== today) {
-        parsedItems = parsedItems.map(i => ({ ...i, completed: false }));
-        localStorage.setItem('streamos_agenda_date', today);
-      }
-      setItems(parsedItems);
-    } else {
-      setItems(DEFAULT_SCHEDULE);
-      localStorage.setItem('streamos_agenda_date', today);
-    }
-  }, [t.agenda.items]); 
-
-  // Save Data
-  useEffect(() => {
-    if (items.length > 0) {
-        localStorage.setItem('streamos_agenda', JSON.stringify(items));
-    }
-  }, [items]);
-
   const toggleComplete = (id: string) => {
     setItems(prev => prev.map(item => {
       if (item.id === id) {
         if (item.completed) {
-            // Unchecking: remove XP
             onGainXP(-item.xpReward);
         } else {
-            // Checking: add XP
             onGainXP(item.xpReward);
         }
         return { ...item, completed: !item.completed };
@@ -87,7 +50,6 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP }) => {
     const itemToDelete = items.find(i => i.id === id);
     if (confirm('Delete this block?')) {
         if (itemToDelete && itemToDelete.completed) {
-            // Remove XP if deleting a completed item to prevent exploit
             onGainXP(-itemToDelete.xpReward);
         }
         setItems(prev => prev.filter(i => i.id !== id));
@@ -97,7 +59,6 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP }) => {
   const addNewItem = () => {
     if (!newItem.title) return;
     
-    // Calculate simple XP based on type
     let xp = 10;
     if (newItem.type === 'creative') xp = 100;
     if (newItem.type === 'learning') xp = 30;
@@ -113,6 +74,14 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP }) => {
     setItems(prev => [...prev, item].sort((a, b) => a.startTime.localeCompare(b.startTime)));
     setIsModalOpen(false);
     setNewItem({ title: '', desc: '', startTime: '09:00', endTime: '10:00', type: 'work' });
+  };
+
+  const handleFocusComplete = () => {
+      if (activeFocusItem) {
+          onGainXP(25); // Bonus XP
+          toggleComplete(activeFocusItem.id);
+          setActiveFocusItem(null);
+      }
   };
 
   const getIcon = (type: string) => {
@@ -141,6 +110,17 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP }) => {
 
   return (
     <div className="max-w-3xl mx-auto pb-20">
+      
+      {/* Focus Mode Overlay */}
+      {activeFocusItem && (
+          <FocusMode 
+            item={activeFocusItem} 
+            lang={lang} 
+            onComplete={handleFocusComplete}
+            onCancel={() => setActiveFocusItem(null)}
+          />
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-display text-white flex items-center gap-2">
             <Clock className="text-cyber-cyan" /> {t.agenda.title}
@@ -162,10 +142,8 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP }) => {
           const Icon = getIcon(item.type);
           return (
             <div key={item.id} className="relative pl-8 md:pl-12 group">
-              {/* Timeline Dot */}
               <div className={`absolute -left-[9px] top-6 w-4 h-4 rounded-full border-2 transition-colors ${item.completed ? 'bg-cyber-green border-cyber-green' : 'bg-cyber-900 border-gray-600'}`}></div>
               
-              {/* Card */}
               <div className={`p-4 rounded-xl border relative ${getColors(item.type, item.completed)} transition-all duration-300`}>
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-2 mb-2">
                     <div className="flex items-start gap-3">
@@ -184,11 +162,20 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP }) => {
                     </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex justify-between items-center mt-3 ml-11 border-t border-white/5 pt-2">
                     <span className="text-xs font-mono font-bold text-cyber-cyan/70">+{item.xpReward} XP</span>
                     
                     <div className="flex gap-2">
+                        {/* FOCUS BUTTON */}
+                        {!item.completed && (
+                            <button 
+                                onClick={() => setActiveFocusItem(item)}
+                                className="flex items-center gap-1 px-3 py-1 rounded text-xs font-bold border border-yellow-500/50 text-yellow-500 hover:bg-yellow-500 hover:text-black transition-all"
+                            >
+                                <Zap size={12} /> {t.agenda.startTimer}
+                            </button>
+                        )}
+
                         <button 
                             onClick={() => deleteItem(item.id)}
                             className="p-1.5 text-gray-600 hover:text-red-500 transition-colors"
@@ -210,12 +197,10 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP }) => {
         })}
       </div>
 
-      {/* ADD MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-cyber-900 border border-cyber-700 rounded-xl w-full max-w-md p-6 shadow-2xl animate-fade-in">
                 <h3 className="text-xl font-display text-white mb-4">{t.agenda.modal.title}</h3>
-                
                 <div className="space-y-4">
                     <div>
                         <label className="text-xs text-gray-500 uppercase">{t.agenda.modal.name}</label>
@@ -272,7 +257,6 @@ const Agenda: React.FC<AgendaProps> = ({ lang, onGainXP }) => {
                         </select>
                     </div>
                 </div>
-
                 <div className="flex justify-end gap-3 mt-6">
                     <button 
                         onClick={() => setIsModalOpen(false)}

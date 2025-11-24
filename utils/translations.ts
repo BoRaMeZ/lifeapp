@@ -81,7 +81,20 @@ export const translations = {
       actions: {
         move: 'Move',
         delete: 'Archive',
-        confirmBack: 'Move back to previous stage? XP gained will be reverted.'
+        confirmBack: 'Move back to previous stage? XP gained will be reverted.',
+        confirmDelete: 'Delete Project? Accumulated XP will be deducted.'
+      },
+      detail: {
+        tabs: { details: 'Details', script: 'AI Script' },
+        mentalBlock: 'Mental Block Cure',
+        vibe: 'Vibe / Tone',
+        context: 'What happens? (Context)',
+        goal: 'Goal',
+        generate: 'Generate Script with AI',
+        generating: 'Writing script...',
+        scriptLabel: 'Generated Script',
+        save: 'Save Project',
+        close: 'Close'
       }
     },
     baseOps: {
@@ -89,6 +102,15 @@ export const translations = {
       subtitle: 'Daily Maintenance',
       burnoutWarning: 'Complete routine to prevent "Burnout" debuff.',
       resetMsg: 'Tasks reset for new day',
+      add: 'Add Task',
+      modal: {
+        title: 'New Routine Task',
+        name: 'Task Name',
+        category: 'Category',
+        xp: 'XP Reward',
+        save: 'Add Routine',
+        cancel: 'Cancel'
+      },
       tasks: {
         t1: 'Dishes Cleared',
         t2: 'Backpack Packed',
@@ -102,13 +124,50 @@ export const translations = {
       status: 'Online • Systems Nominal',
       analyzing: 'Analyzing data...',
       placeholder: "Ask StreamOS for tactics...",
-      initialMsg: "Greetings. I am StreamOS v3.0. I am now tracking your real-time progress. How can I assist with your schedule today?",
+      initialMsg: "Greetings. I am StreamOS v4.0. I am now tracking your real-time progress. How can I assist with your schedule today?",
+      actions: {
+        plan: 'Plan Day',
+        ideas: 'Viral Ideas',
+        status: 'Status Check'
+      },
+      mic: {
+        listening: 'Listening...',
+        error: 'Mic Error',
+        unsupported: 'Browser Not Supported'
+      }
     },
     badges: {
       streak3: 'Consistency Rookie (3 Days)',
       streak7: 'Algorithm Favorite (7 Days)',
       level5: 'Affiliate Status (Lvl 5)',
       xp1000: 'Content Machine (1k XP)'
+    },
+    settings: {
+      title: 'System Settings',
+      profile: 'Operative Profile',
+      name: 'Codename',
+      avatar: 'Avatar URL',
+      themes: 'Visual Theme',
+      backup: 'Data Persistence',
+      export: 'Export Backup',
+      import: 'Import Backup',
+      danger: 'Danger Zone',
+      resetXP: 'Reset XP/Level',
+      factoryReset: 'Factory Reset (Wipe All)',
+      close: 'Close Panel'
+    },
+    levelUp: {
+      congrats: 'LEVEL UP!',
+      reached: 'You have reached Level',
+      continue: 'Continue The Grind'
+    },
+    focus: {
+      title: 'FOCUS MODE',
+      complete: 'SESSION COMPLETE',
+      bonus: 'Bonus XP Gained',
+      stop: 'Abort Mission',
+      resume: 'Resume',
+      pause: 'Pause'
     }
   },
   es: {
@@ -139,7 +198,7 @@ export const translations = {
     },
     agenda: {
       title: 'Línea Temporal Táctica',
-      startTimer: 'Iniciar Timer',
+      startTimer: 'Búnker',
       addBlock: 'Añadir Bloque',
       empty: 'Agenda vacía. Añade un bloque para empezar.',
       modal: {
@@ -190,7 +249,20 @@ export const translations = {
       actions: {
         move: 'Mover',
         delete: 'Archivar',
-        confirmBack: '¿Retroceder etapa? Se revertirá la XP ganada.'
+        confirmBack: '¿Retroceder etapa? Se revertirá la XP ganada.',
+        confirmDelete: '¿Eliminar Proyecto? Se descontará la XP acumulada.'
+      },
+      detail: {
+        tabs: { details: 'Detalles', script: 'IA Guionista' },
+        mentalBlock: 'Cura de Bloqueo Mental',
+        vibe: 'Vibe / Tono',
+        context: '¿Qué ocurre? (Contexto)',
+        goal: 'Objetivo',
+        generate: 'Generar Guion con IA',
+        generating: 'Escribiendo guion...',
+        scriptLabel: 'Guion Generado',
+        save: 'Guardar Proyecto',
+        close: 'Cerrar'
       }
     },
     baseOps: {
@@ -198,6 +270,15 @@ export const translations = {
       subtitle: 'Mantenimiento Diario',
       burnoutWarning: 'Completa la rutina para evitar el debuff de "Burnout".',
       resetMsg: 'Tareas reiniciadas por nuevo día',
+      add: 'Añadir Tarea',
+      modal: {
+        title: 'Nueva Tarea de Rutina',
+        name: 'Nombre Tarea',
+        category: 'Categoría',
+        xp: 'Recompensa XP',
+        save: 'Añadir Rutina',
+        cancel: 'Cancelar'
+      },
       tasks: {
         t1: 'Platos Lavados',
         t2: 'Mochila Lista',
@@ -211,13 +292,50 @@ export const translations = {
       status: 'En Línea • Sistemas Nominales',
       analyzing: 'Analizando datos...',
       placeholder: "Pide tácticas a StreamOS...",
-      initialMsg: "Saludos. Soy StreamOS v3.0. Ahora estoy rastreando tu progreso real. ¿Cómo puedo ayudarte con tu agenda hoy?",
+      initialMsg: "Saludos. Soy StreamOS v4.0. Ahora estoy rastreando tu progreso real. ¿Cómo puedo ayudarte con tu agenda hoy?",
+      actions: {
+        plan: 'Planificar Día',
+        ideas: 'Ideas Virales',
+        status: 'Análisis Estado'
+      },
+      mic: {
+        listening: 'Escuchando...',
+        error: 'Error de Micro',
+        unsupported: 'Navegador No Soportado'
+      }
     },
     badges: {
       streak3: 'Novato Constante (3 Días)',
       streak7: 'Favorito del Algoritmo (7 Días)',
       level5: 'Status Afiliado (Nvl 5)',
       xp1000: 'Máquina de Contenido (1k XP)'
+    },
+    settings: {
+      title: 'Configuración del Sistema',
+      profile: 'Perfil de Operador',
+      name: 'Nombre Clave',
+      avatar: 'URL del Avatar',
+      themes: 'Tema Visual',
+      backup: 'Persistencia de Datos',
+      export: 'Exportar Backup',
+      import: 'Importar Backup',
+      danger: 'Zona de Peligro',
+      resetXP: 'Reiniciar XP/Nivel',
+      factoryReset: 'Restablecimiento de Fábrica (Borrar Todo)',
+      close: 'Cerrar Panel'
+    },
+    levelUp: {
+      congrats: '¡SUBIDA DE NIVEL!',
+      reached: 'Has alcanzado el Nivel',
+      continue: 'Continuar el Grind'
+    },
+    focus: {
+      title: 'MODO BÚNKER',
+      complete: 'SESIÓN COMPLETADA',
+      bonus: 'Bonus XP Ganado',
+      stop: 'Abortar Misión',
+      resume: 'Reanudar',
+      pause: 'Pausar'
     }
   }
 };
