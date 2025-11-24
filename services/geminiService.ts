@@ -20,14 +20,9 @@ export const sendMessageToGemini = async (
   stats?: PlayerStats
 ): Promise<string> => {
   try {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      return lang === 'es' 
-        ? "Error: Mal funcionamiento del sistema. API_KEY no detectada." 
-        : "Error: System Malfunction. API_KEY not detected.";
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
+    // Initialize standard Google GenAI client
+    // The key is now injected via vite.config.ts define
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     // Add language instruction
     const langInstruction = lang === 'es' 
@@ -42,6 +37,7 @@ export const sendMessageToGemini = async (
 
     const finalSystemInstruction = `${SYSTEM_INSTRUCTION_BASE}\n${langInstruction}\n${statsContext}`;
     
+    // Using gemini-2.5-flash as requested
     const model = 'gemini-2.5-flash';
     
     const chat = ai.chats.create({
@@ -49,10 +45,12 @@ export const sendMessageToGemini = async (
       config: {
         systemInstruction: finalSystemInstruction,
       },
+      // Pass history correctly to the chat session
+      history: history.map(h => ({
+        role: h.role,
+        parts: [{ text: h.text }]
+      })),
     });
-
-    const contextPrompt = history.map(h => `${h.role === 'user' ? 'User' : 'StreamOS'}: ${h.text}`).join('\n');
-    const fullPrompt = `${contextPrompt}\nUser: ${message}`;
 
     const result = await chat.sendMessage({
       message: message 
@@ -62,7 +60,7 @@ export const sendMessageToGemini = async (
   } catch (error) {
     console.error("Gemini Error:", error);
     return lang === 'es' 
-      ? "Fallo Crítico: No se puede conectar a la Red Neuronal." 
-      : "Critical Failure: Unable to connect to Neural Network.";
+      ? "Fallo Crítico: No se puede conectar a la Red Neuronal (Error de API)." 
+      : "Critical Failure: Unable to connect to Neural Network (API Error).";
   }
 };
