@@ -36,6 +36,7 @@ export interface AgendaItem {
   type: 'work' | 'creative' | 'transit' | 'base' | 'learning' | 'sleep';
   completed: boolean;
   xpReward: number;
+  isStream?: boolean; // New: Explicit flag for stream blocks
 }
 
 export interface DailyTask {

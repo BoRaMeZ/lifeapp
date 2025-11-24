@@ -164,3 +164,41 @@ export const generateVideoScript = async (
         return lang === 'es' ? "Error de conexión." : "Connection Error.";
     }
 }
+
+export const generateStreamTitles = async (
+    game: string,
+    vibe: string,
+    lang: Language
+): Promise<string[]> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const model = 'gemini-2.5-flash';
+        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
+
+        const prompt = `
+        Generate 3 CLICKBAIT stream titles for KICK/TWITCH.
+        GAME/TOPIC: ${game}
+        VIBE: ${vibe}
+        ${langInstruction}
+
+        Rules:
+        - Use CAPS lock for emphasis.
+        - Include 1 emoji per title.
+        - Keep it under 60 chars.
+        - Return ONLY the 3 titles separated by a pipe character "|".
+        Example: ROAD TO UNREAL 🏆 | CRANKING 90s NO SLEEP ⚡ | DROPPING 20 BOMBS 💣
+        `;
+
+        const result = await ai.models.generateContent({
+            model: model,
+            contents: prompt
+        });
+
+        const text = result.text || "";
+        const titles = text.split('|').map(t => t.trim()).filter(t => t.length > 0);
+        return titles.length > 0 ? titles : ["Stream Title 1", "Stream Title 2", "Stream Title 3"];
+
+    } catch (e) {
+        return ["Error generating titles", "Try again", "System Offline"];
+    }
+}

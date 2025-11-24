@@ -8,6 +8,7 @@ import BaseOps from './components/BaseOps';
 import AICoach from './components/AICoach';
 import SettingsModal from './components/SettingsModal';
 import LevelUpModal from './components/LevelUpModal';
+import StreamLauncher from './components/StreamLauncher';
 import { LayoutDashboard, Calendar, Video, Home, MessageSquare, Terminal, Globe, Award, Settings } from 'lucide-react';
 import { getTranslation } from './utils/translations';
 
@@ -68,6 +69,7 @@ const App: React.FC = () => {
   // -- MODAL STATE --
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState(false);
+  const [showStreamLauncher, setShowStreamLauncher] = useState(false); 
 
   // 1. LOAD DATA ON MOUNT
   useEffect(() => {
@@ -213,7 +215,10 @@ const App: React.FC = () => {
           badges={badges} 
           lang={lang} 
           userProfile={userProfile}
+          agenda={agendaItems} // Pass data for HUD
+          tasks={dailyTasks}   // Pass data for HUD
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onStartStream={() => setShowStreamLauncher(true)}
         />;
       case AppTab.AGENDA:
         return <Agenda 
@@ -243,7 +248,16 @@ const App: React.FC = () => {
             onGainXP={gainXP}
         />;
       default:
-        return <Dashboard stats={stats} badges={badges} lang={lang} userProfile={userProfile} onOpenSettings={() => setIsSettingsOpen(true)} />;
+        return <Dashboard 
+            stats={stats} 
+            badges={badges} 
+            lang={lang} 
+            userProfile={userProfile} 
+            agenda={agendaItems}
+            tasks={dailyTasks}
+            onOpenSettings={() => setIsSettingsOpen(true)} 
+            onStartStream={() => setShowStreamLauncher(true)} 
+        />;
     }
   };
 
@@ -255,7 +269,7 @@ const App: React.FC = () => {
     { id: AppTab.AI_COACH, label: t.nav.aiCoach, icon: MessageSquare },
   ];
 
-  if (!isInitialized) return <div className="min-h-screen bg-[#050b14] flex items-center justify-center text-cyber-cyan font-mono">LOADING SYSTEM...</div>;
+  if (!isInitialized) return <div className="min-h-screen bg-[#050b14] flex items-center justify-center text-cyber-cyan font-mono">BOOTING KAIROS...</div>;
 
   return (
     <div className={`theme-${theme} min-h-screen bg-cyber-900 text-gray-200 font-sans selection:bg-cyber-cyan selection:text-black transition-colors duration-500`}>
@@ -263,7 +277,7 @@ const App: React.FC = () => {
       <div className="md:hidden bg-cyber-900 border-b border-cyber-700 p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2">
             <Terminal className="text-cyber-cyan" size={24} />
-            <span className="font-display font-bold text-lg tracking-wider">STREAM.OS</span>
+            <span className="font-display font-bold text-lg tracking-wider">KAIROS.OS</span>
         </div>
         <div className="flex items-center gap-3">
              <button 
@@ -283,14 +297,14 @@ const App: React.FC = () => {
 
       <div className="flex h-screen overflow-hidden">
         {/* Sidebar (Desktop) */}
-        <aside className="hidden md:flex w-64 bg-cyber-900 border-r border-cyber-800 flex-col p-4">
+        <aside className="hidden md:flex w-64 bg-cyber-900 border-r border-cyber-800 flex-col p-4 relative z-20">
           <div className="flex items-center gap-3 mb-10 px-2 mt-2">
             <div className="bg-cyber-cyan/20 p-2 rounded-lg border border-cyber-cyan/50">
                 <Terminal className="text-cyber-cyan" size={28} />
             </div>
             <div>
-                <h1 className="font-display font-bold text-xl text-white tracking-wider">STREAM.OS</h1>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest">v4.0.0 ELITE</p>
+                <h1 className="font-display font-bold text-xl text-white tracking-wider">KAIROS</h1>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest">OS v4.1 ELITE</p>
             </div>
           </div>
 
@@ -365,21 +379,17 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
-            <div className="fixed inset-0 pointer-events-none opacity-5" 
-                style={{
-                    backgroundImage: 'linear-gradient(var(--color-primary) 1px, transparent 1px), linear-gradient(90deg, var(--color-primary) 1px, transparent 1px)',
-                    backgroundSize: '40px 40px'
-                }}
-            />
+            <div className="bg-grid fixed inset-0 pointer-events-none z-0"></div>
             
             <div className="max-w-6xl mx-auto relative z-10 pb-20 md:pb-0">
                 <header className="mb-8 flex justify-between items-center">
                     <div>
-                        <h2 className="text-3xl font-display font-bold text-white uppercase tracking-wide">
+                        <h2 className="text-3xl font-display font-bold text-white uppercase tracking-wide drop-shadow-lg">
                             {navItems.find(n => n.id === activeTab)?.label}
                         </h2>
-                        <p className="text-gray-400 text-sm mt-1">
-                           System Status: <span className="text-cyber-green">Operational</span>
+                        <p className="text-gray-400 text-sm mt-1 flex items-center gap-2">
+                           <span className="w-2 h-2 rounded-full bg-cyber-green animate-pulse"></span>
+                           System Status: Nominal
                         </p>
                     </div>
                     <div className="hidden md:block text-right">
@@ -395,7 +405,7 @@ const App: React.FC = () => {
         </main>
 
         {/* Mobile Bottom Nav */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-cyber-900 border-t border-cyber-700 p-2 flex justify-around z-50 pb-safe">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-cyber-900/90 backdrop-blur-md border-t border-cyber-700 p-2 flex justify-around z-50 pb-safe">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -431,6 +441,14 @@ const App: React.FC = () => {
             lang={lang} 
             onClose={() => setShowLevelUp(false)} 
           />
+        )}
+        
+        {showStreamLauncher && (
+            <StreamLauncher 
+                lang={lang}
+                onClose={() => setShowStreamLauncher(false)}
+                onComplete={() => {}}
+            />
         )}
 
       </div>

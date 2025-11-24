@@ -11,59 +11,82 @@ export const translations = {
       aiCoach: 'Coach AI',
     },
     dashboard: {
-      currentLevel: 'Current Level',
-      noviceStreamer: 'Urban Ninja',
+      currentLevel: 'Rank',
+      noviceStreamer: 'Operative',
       xp: 'XP',
-      target: 'Target',
-      loginStreak: 'Login Streak',
+      target: 'Next Rank',
+      loginStreak: 'Sync Streak',
       days: 'Days',
-      consistency: 'Consistency is key to the algorithm.',
-      nextBlock: 'Next Energy Block',
-      objective: 'Objective: Check Studio board for tasks.',
-      xpDist: 'Weekly XP Distribution',
+      consistency: 'Consistency is power.',
+      nextBlock: 'Next Mission',
+      objective: 'Objective: Check Studio board.',
+      xpDist: 'Performance Radar',
       activeMissions: 'Active Missions',
-      badges: 'Achievements',
+      badges: 'Medals',
       locked: 'Locked',
       completed: 'Completed',
       remaining: 'Remaining',
       toLevel: 'to Level',
+      goLive: 'INITIATE STREAM',
+      prepStream: 'PREP SEQUENCE',
+      goLiveDesc: 'Launch Protocol',
+      activeQuest: 'ACTIVE QUEST',
+      upcomingQuest: 'UPCOMING DEPLOYMENT',
+      noActiveQuest: 'SYSTEM IDLE - Awaiting Orders',
+      startsIn: 'T-Minus',
+      attributes: {
+          creativity: 'CRE',
+          discipline: 'DIS',
+          vitality: 'VIT',
+          focus: 'FOC',
+          technique: 'TEC'
+      },
+      attributeDesc: {
+        creativity: 'Boost via Studio Projects',
+        discipline: 'Boost via Base Ops Tasks',
+        vitality: 'Boost via Leveling Up',
+        focus: 'Boost via Login Streak',
+        technique: 'Boost via Unlocking Badges'
+      },
+      heatmap: 'Activity Log'
     },
     agenda: {
       title: 'Tactical Timeline',
-      startTimer: 'Start Timer',
-      addBlock: 'Add Time Block',
-      nowActive: 'NOW ACTIVE',
-      empty: 'No schedule defined. Add a block to start.',
+      startTimer: 'Focus Protocol',
+      addBlock: 'Assign Mission',
+      nowActive: 'ENGAGED',
+      empty: 'No missions scheduled. Assign a block to start.',
       modal: {
         title: 'New Time Block',
-        name: 'Task Name',
-        desc: 'Description',
+        name: 'Mission Name',
+        desc: 'Briefing',
         start: 'Start Time',
         end: 'End Time',
         type: 'Energy Type',
-        save: 'Save Block',
-        cancel: 'Cancel'
+        isStream: '🔴 IS THIS A STREAM?',
+        save: 'Confirm Block',
+        cancel: 'Abort'
       },
       types: {
-        work: 'Work (Low XP)',
-        creative: 'Creative (High XP)',
-        transit: 'Transit',
+        work: 'Core Grind (Low XP)',
+        creative: 'Crafting (High XP)',
+        transit: 'Fast Travel',
         base: 'Base Ops',
-        learning: 'Learning',
-        sleep: 'Rest'
+        learning: 'Intel Gathering',
+        sleep: 'Stasis / Recharge'
       },
       items: {
-        work: { title: 'The Grind (Work)', desc: 'Keep head down. Save energy.' },
-        transit: { title: 'Commute & Decompress', desc: 'Listen to music/podcasts. Do NOT doomscroll.' },
-        base: { title: 'Arrival & Reset', desc: 'Shower, food, change clothes. No screens.' },
-        creative: { title: 'Power Block: Creation', desc: 'One task only: Clip editing OR Thumbnail design.' },
-        learning: { title: 'Power Block: Learning', desc: 'Watch 1 tutorial or analyze 1 pro streamer.' },
-        sleep: { title: 'System Shutdown', desc: 'Pack bag, sleep.' },
+        work: { title: 'The Grind', desc: 'Maintain cover. Save energy.' },
+        transit: { title: 'Fast Travel', desc: 'Audio logs/Podcasts. No doomscrolling.' },
+        base: { title: 'Base Resupply', desc: 'Shower, food, loot sort. No screens.' },
+        creative: { title: 'Skill Up: Creation', desc: 'Single task focus: Edit or Design.' },
+        learning: { title: 'Intel Gathering', desc: 'Analyze pro gameplay or tutorials.' },
+        sleep: { title: 'System Shutdown', desc: 'Restoration mode.' },
       }
     },
     studio: {
       title: 'Content Studio',
-      subtitle: "Manage your content pipeline. Move one card per day.",
+      subtitle: "Pipeline Management. 1 Card/Day Strategy.",
       newIdea: 'New Project',
       emptySlot: 'No active projects.',
       addModal: {
@@ -75,28 +98,28 @@ export const translations = {
       },
       cols: {
         idea: 'Ideas Bank',
-        recording: 'To Clip/Record',
-        editing: 'In Editing',
-        ready: 'Ready to Upload',
+        recording: 'To Record',
+        editing: 'Processing',
+        ready: 'Deployment Ready',
       },
       actions: {
-        move: 'Move',
+        move: 'Advance',
         delete: 'Archive',
-        confirmBack: 'Move back to previous stage? XP gained will be reverted.',
+        confirmBack: 'Regression? XP gained will be reverted.',
         confirmDelete: 'Delete Project? Accumulated XP will be deducted.'
       },
       detail: {
-        tabs: { details: 'Details', script: 'AI Script' },
+        tabs: { details: 'Specs', script: 'AI Script' },
         mentalBlock: 'Creative Unblock',
-        vibe: 'Vibe / Tone',
-        context: 'What happens? (Context)',
-        goal: 'Goal',
-        generate: 'Generate Script with AI',
-        generating: 'Writing script...',
-        scriptLabel: 'Generated Script',
-        waiting: 'AI Waiting for input...',
-        save: 'Save Project',
-        close: 'Close',
+        vibe: 'Tone / Vibe',
+        context: 'Scenario (Context)',
+        goal: 'Objective',
+        generate: 'Generate Script',
+        generating: 'Compiling...',
+        scriptLabel: 'Output Script',
+        waiting: 'Awaiting input parameters...',
+        save: 'Save Config',
+        close: 'Dismiss',
         options: {
             vibe: {
                 funny: 'Funny / High Energy',
@@ -106,20 +129,20 @@ export const translations = {
                 epic: 'Epic / Montage'
             },
             goal: {
-                engagement: 'Engagement (Comments)',
-                viral: 'Viral (Shares)',
-                followers: 'Followers',
-                sales: 'Sales/Promo'
+                engagement: 'Engagement',
+                viral: 'Virality',
+                followers: 'Recruitment',
+                sales: 'Loot/Promo'
             }
         }
       }
     },
     baseOps: {
       title: 'Base Operations',
-      subtitle: 'Daily Maintenance',
+      subtitle: 'Maintenance Protocols',
       burnoutWarning: 'Complete routine to prevent "Burnout" debuff.',
-      resetMsg: 'Tasks reset for new day',
-      add: 'Add Task',
+      resetMsg: 'Tasks reset for new cycle',
+      add: 'Add Routine',
       modal: {
         title: 'New Routine Task',
         name: 'Task Name',
@@ -137,20 +160,20 @@ export const translations = {
       }
     },
     aiCoach: {
-      title: 'Strategy Coach AI',
+      title: 'Tactical AI Coach',
       status: 'Online • Systems Nominal',
-      analyzing: 'Analyzing data...',
-      placeholder: "Ask StreamOS for tactics...",
-      initialMsg: "Greetings. I am StreamOS v4.0. I am now tracking your real-time progress. How can I assist with your schedule today?",
+      analyzing: 'Calculating...',
+      placeholder: "Awaiting orders...",
+      initialMsg: "KAIROS OS Online. Tracking biometrics. What is the mission plan?",
       actions: {
-        plan: 'Plan Day',
-        ideas: 'Viral Ideas',
-        status: 'Status Check'
+        plan: 'Auto-Schedule',
+        ideas: 'Gen Ideas',
+        status: 'Sys Check'
       },
       mic: {
-        listening: 'Listening...',
-        error: 'Mic Error',
-        unsupported: 'Browser Not Supported'
+        listening: 'Receiving Audio...',
+        error: 'Comms Error',
+        unsupported: 'Hardware Not Supported'
       }
     },
     badges: {
@@ -160,26 +183,26 @@ export const translations = {
       xp1000: 'Content Machine (1k XP)'
     },
     settings: {
-      title: 'System Settings',
+      title: 'System Config',
       profile: 'Operative Profile',
       name: 'Codename',
       avatar: 'Avatar URL',
-      themes: 'Visual Theme',
+      themes: 'Visual Interface',
       backup: 'Data Persistence',
-      export: 'Export Backup',
-      import: 'Import Backup',
-      danger: 'Danger Zone',
-      resetXP: 'Reset XP/Level',
-      factoryReset: 'Factory Reset (Wipe All)',
-      close: 'Close Panel'
+      export: 'Export Data',
+      import: 'Import Data',
+      danger: 'Dead Zone',
+      resetXP: 'Reset Rank',
+      factoryReset: 'System Wipe',
+      close: 'Exit Config'
     },
     levelUp: {
-      congrats: 'LEVEL UP!',
-      reached: 'You have reached Level',
-      continue: 'Continue The Grind'
+      congrats: 'RANK UP!',
+      reached: 'New Clearance Level',
+      continue: 'Continue Mission'
     },
     focus: {
-      title: 'FOCUS MODE',
+      title: 'BUNKER MODE',
       complete: 'SESSION COMPLETE',
       bonus: 'Bonus XP Gained',
       stop: 'Abort Mission',
@@ -187,6 +210,27 @@ export const translations = {
       pause: 'Pause',
       locked: 'TARGET LOCKED. DISTRACTIONS DISABLED.',
       ready: 'READY TO ENGAGE?'
+    },
+    stream: {
+        title: 'LAUNCHPAD',
+        checklist: 'Pre-Flight Checklist',
+        generate: 'Generate Titles',
+        gamePlaceholder: 'Game/Topic',
+        vibePlaceholder: 'Vibe',
+        btnGenerate: 'Run Title Gen',
+        generating: 'Thinking...',
+        items: {
+            water: 'Hydration (Water Bottle)',
+            obs: 'OBS Scene Check',
+            mic: 'Mic Test (No Mute)',
+            lights: 'Lighting ON',
+            socials: 'Social Notification Posted'
+        },
+        addItem: 'Add item...',
+        add: 'Add',
+        onAir: 'ON AIR',
+        drinkReminder: 'HYDRATE',
+        end: 'END TRANSMISSION'
     }
   },
   es: {
@@ -198,59 +242,82 @@ export const translations = {
       aiCoach: 'Coach IA',
     },
     dashboard: {
-      currentLevel: 'Nivel Actual',
-      noviceStreamer: 'Ninja Urbano',
+      currentLevel: 'Rango',
+      noviceStreamer: 'Operador',
       xp: 'XP',
-      target: 'Meta',
-      loginStreak: 'Racha Login',
+      target: 'Siguiente',
+      loginStreak: 'Racha Sinc',
       days: 'Días',
-      consistency: 'La constancia es clave para el algoritmo.',
-      nextBlock: 'Siguiente Bloque',
-      objective: 'Objetivo: Revisar tablero de Estudio.',
-      xpDist: 'Distribución Semanal de XP',
+      consistency: 'La constancia es poder.',
+      nextBlock: 'Siguiente Misión',
+      objective: 'Objetivo: Revisar tablero.',
+      xpDist: 'Radar de Rendimiento',
       activeMissions: 'Misiones Activas',
-      badges: 'Logros',
+      badges: 'Medallas',
       locked: 'Bloqueado',
       completed: 'Completado',
       remaining: 'Restante',
       toLevel: 'para Nivel',
+      goLive: 'INICIAR TRANSMISIÓN',
+      prepStream: 'SECUENCIA DE PREPARACIÓN',
+      goLiveDesc: 'Protocolo de Lanzamiento',
+      activeQuest: 'MISIÓN ACTIVA',
+      upcomingQuest: 'DESPLIEGUE INMINENTE',
+      noActiveQuest: 'SISTEMA EN ESPERA - Asigna tarea',
+      startsIn: 'T-Menos',
+      attributes: {
+          creativity: 'CRE',
+          discipline: 'DIS',
+          vitality: 'VIT',
+          focus: 'ENF',
+          technique: 'TEC'
+      },
+      attributeDesc: {
+        creativity: 'Sube creando Proyectos en Studio',
+        discipline: 'Sube con Rutinas Diarias en Ops',
+        vitality: 'Sube al alcanzar nuevo Nivel',
+        focus: 'Sube manteniendo tu Racha diaria',
+        technique: 'Sube desbloqueando nuevas Medallas'
+      },
+      heatmap: 'Registro de Actividad'
     },
     agenda: {
       title: 'Línea Temporal Táctica',
-      startTimer: 'Búnker',
-      addBlock: 'Añadir Bloque',
+      startTimer: 'Protocolo Foco',
+      addBlock: 'Asignar Misión',
       nowActive: 'EN CURSO',
-      empty: 'Agenda vacía. Añade un bloque para empezar.',
+      empty: 'Sin misiones. Asigna un bloque para iniciar.',
       modal: {
-        title: 'Nuevo Bloque de Tiempo',
-        name: 'Nombre Tarea',
-        desc: 'Descripción',
+        title: 'Nueva Misión',
+        name: 'Nombre Misión',
+        desc: 'Briefing',
         start: 'Hora Inicio',
         end: 'Hora Fin',
         type: 'Tipo de Energía',
-        save: 'Guardar Bloque',
-        cancel: 'Cancelar'
+        isStream: '🔴 ¿ES UNA TRANSMISIÓN?',
+        save: 'Confirmar',
+        cancel: 'Abortar'
       },
       types: {
-        work: 'Trabajo (Baja XP)',
-        creative: 'Creativo (Alta XP)',
-        transit: 'Tránsito',
+        work: 'Grind Principal (Baja XP)',
+        creative: 'Crafteo (Alta XP)',
+        transit: 'Viaje Rápido',
         base: 'Ops Base',
-        learning: 'Aprendizaje',
-        sleep: 'Descanso'
+        learning: 'Inteligencia',
+        sleep: 'Éxtasis / Recarga'
       },
       items: {
-        work: { title: 'El Grind (Trabajo)', desc: 'Cabeza abajo. Ahorra energía.' },
-        transit: { title: 'Transporte y Descompresión', desc: 'Música/Podcasts. NO hagas doomscrolling.' },
-        base: { title: 'Llegada y Reinicio', desc: 'Ducha, comida, cambio de ropa. Sin pantallas.' },
-        creative: { title: 'Bloque de Poder: Creación', desc: 'Solo una tarea: Editar clip O diseñar miniatura.' },
-        learning: { title: 'Bloque de Poder: Aprendizaje', desc: 'Ver 1 tutorial o analizar a 1 streamer pro.' },
-        sleep: { title: 'Apagado del Sistema', desc: 'Preparar mochila, dormir.' },
+        work: { title: 'El Grind', desc: 'Mantener perfil bajo. Ahorrar energía.' },
+        transit: { title: 'Viaje Rápido', desc: 'Audio logs/Podcasts. NO doomscrolling.' },
+        base: { title: 'Reabastecimiento', desc: 'Ducha, comida, loot. Sin pantallas.' },
+        creative: { title: 'Skill Up: Creación', desc: 'Foco único: Editar o Diseñar.' },
+        learning: { title: 'Inteligencia', desc: 'Analizar gameplay pro o tutoriales.' },
+        sleep: { title: 'Apagado del Sistema', desc: 'Modo restauración.' },
       }
     },
     studio: {
       title: 'Estudio de Contenido',
-      subtitle: "Gestiona tu flujo. Mueve una tarjeta por día.",
+      subtitle: "Gestión de Pipeline. Estrategia 1 Carta/Día.",
       newIdea: 'Nuevo Proyecto',
       emptySlot: 'Sin proyectos activos.',
       addModal: {
@@ -262,27 +329,27 @@ export const translations = {
       },
       cols: {
         idea: 'Banco de Ideas',
-        recording: 'Grabar/Clipear',
-        editing: 'En Edición',
-        ready: 'Listo para Subir',
+        recording: 'Para Grabar',
+        editing: 'Procesando',
+        ready: 'Listo para Despliegue',
       },
       actions: {
-        move: 'Mover',
+        move: 'Avanzar',
         delete: 'Archivar',
-        confirmBack: '¿Retroceder etapa? Se revertirá la XP ganada.',
+        confirmBack: '¿Regresión? Se revertirá la XP ganada.',
         confirmDelete: '¿Eliminar Proyecto? Se descontará la XP acumulada.'
       },
       detail: {
-        tabs: { details: 'Detalles', script: 'IA Guionista' },
+        tabs: { details: 'Specs', script: 'IA Guionista' },
         mentalBlock: 'Desbloqueo Creativo',
         vibe: 'Vibe / Tono',
-        context: '¿Qué sucede? (Contexto)',
+        context: 'Escenario (Contexto)',
         goal: 'Objetivo',
-        generate: 'Generar Guion con IA',
-        generating: 'Escribiendo guion...',
-        scriptLabel: 'Guion Generado',
-        waiting: 'IA esperando datos...',
-        save: 'Guardar Proyecto',
+        generate: 'Generar Guion',
+        generating: 'Compilando...',
+        scriptLabel: 'Salida de Guion',
+        waiting: 'Esperando parámetros...',
+        save: 'Guardar Config',
         close: 'Cerrar',
         options: {
             vibe: {
@@ -293,20 +360,20 @@ export const translations = {
                 epic: 'Épico / Montaje'
             },
             goal: {
-                engagement: 'Engagement (Comentarios)',
-                viral: 'Viralidad (Compartir)',
-                followers: 'Seguidores',
-                sales: 'Venta/Promo'
+                engagement: 'Engagement',
+                viral: 'Viralidad',
+                followers: 'Reclutamiento',
+                sales: 'Loot/Promo'
             }
         }
       }
     },
     baseOps: {
       title: 'Operaciones Base',
-      subtitle: 'Mantenimiento Diario',
-      burnoutWarning: 'Completa la rutina para evitar el debuff de "Burnout".',
-      resetMsg: 'Tareas reiniciadas por nuevo día',
-      add: 'Añadir Tarea',
+      subtitle: 'Protocolos de Mantenimiento',
+      burnoutWarning: 'Completa para evitar debuff de "Burnout".',
+      resetMsg: 'Tareas reiniciadas por nuevo ciclo',
+      add: 'Añadir Rutina',
       modal: {
         title: 'Nueva Tarea de Rutina',
         name: 'Nombre Tarea',
@@ -324,20 +391,20 @@ export const translations = {
       }
     },
     aiCoach: {
-      title: 'Coach de Estrategia',
+      title: 'Coach Táctico IA',
       status: 'En Línea • Sistemas Nominales',
-      analyzing: 'Analizando datos...',
-      placeholder: "Pide tácticas a StreamOS...",
-      initialMsg: "Saludos. Soy StreamOS v4.0. Ahora estoy rastreando tu progreso real. ¿Cómo puedo ayudarte con tu agenda hoy?",
+      analyzing: 'Calculando...',
+      placeholder: "Esperando órdenes...",
+      initialMsg: "KAIROS OS En Línea. Rastreando biométricos. ¿Cuál es el plan de misión?",
       actions: {
-        plan: 'Planificar Día',
-        ideas: 'Ideas Virales',
-        status: 'Análisis Estado'
+        plan: 'Auto-Agenda',
+        ideas: 'Gen Ideas',
+        status: 'Check Estado'
       },
       mic: {
-        listening: 'Escuchando...',
-        error: 'Error de Micro',
-        unsupported: 'Navegador No Soportado'
+        listening: 'Recibiendo Audio...',
+        error: 'Error de Comms',
+        unsupported: 'Hardware No Soportado'
       }
     },
     badges: {
@@ -347,23 +414,23 @@ export const translations = {
       xp1000: 'Máquina de Contenido (1k XP)'
     },
     settings: {
-      title: 'Configuración del Sistema',
+      title: 'Configuración de Sistema',
       profile: 'Perfil de Operador',
       name: 'Nombre Clave',
       avatar: 'URL del Avatar',
-      themes: 'Tema Visual',
+      themes: 'Interfaz Visual',
       backup: 'Persistencia de Datos',
-      export: 'Exportar Backup',
-      import: 'Importar Backup',
-      danger: 'Zona de Peligro',
-      resetXP: 'Reiniciar XP/Nivel',
-      factoryReset: 'Restablecimiento de Fábrica (Borrar Todo)',
-      close: 'Cerrar Panel'
+      export: 'Exportar Datos',
+      import: 'Importar Datos',
+      danger: 'Zona Muerta',
+      resetXP: 'Reiniciar Rango',
+      factoryReset: 'Borrado de Sistema',
+      close: 'Salir Config'
     },
     levelUp: {
-      congrats: '¡SUBIDA DE NIVEL!',
-      reached: 'Has alcanzado el Nivel',
-      continue: 'Continuar el Grind'
+      congrats: '¡RANGO SUBIDO!',
+      reached: 'Nuevo Nivel de Acceso',
+      continue: 'Continuar Misión'
     },
     focus: {
       title: 'MODO BÚNKER',
@@ -374,6 +441,27 @@ export const translations = {
       pause: 'Pausar',
       locked: 'OBJETIVO FIJADO. DISTRACCIONES DESACTIVADAS.',
       ready: '¿LISTO PARA INICIAR?'
+    },
+    stream: {
+        title: 'PLATAFORMA DESPEGUE',
+        checklist: 'Checklist Pre-Vuelo',
+        generate: 'Generar Títulos',
+        gamePlaceholder: 'Juego/Tema',
+        vibePlaceholder: 'Vibe',
+        btnGenerate: 'Ejecutar Gen Títulos',
+        generating: 'Pensando...',
+        items: {
+            water: 'Hidratación (Botella)',
+            obs: 'Revisar Escena OBS',
+            mic: 'Test Micro (No Mute)',
+            lights: 'Luces ON',
+            socials: 'Notificación Publicada'
+        },
+        addItem: 'Añadir ítem...',
+        add: 'Añadir',
+        onAir: 'EN VIVO',
+        drinkReminder: 'HIDRATAR',
+        end: 'FINALIZAR TRANSMISIÓN'
     }
   }
 };
