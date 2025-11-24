@@ -7,8 +7,8 @@
     <meta name="description" content="StreamLife OS - Gamified Productivity for Urban Ninjas" />
     <title>StreamLife OS</title>
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/public/manifest.json" />
+    <!-- PWA Manifest: Path corrected for Vercel/Vite build -->
+    <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3959/3959542.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -54,7 +54,7 @@
         border-radius: 4px;
       }
     </style>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
     "react": "https://aistudiocdn.com/react@^19.2.0",
@@ -63,8 +63,8 @@
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
     "recharts": "https://aistudiocdn.com/recharts@^3.5.0",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
-    "vite": "https://aistudiocdn.com/vite@^7.2.4"
+    "vite": "https://aistudiocdn.com/vite@^7.2.4",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
   }
 }
 </script>
