@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { Language, PlayerStats, ProjectCard, AgendaItem, UserProfile, DailyTask, ScriptData, VisionAnalysis, LootChallenge } from "../types";
 
@@ -43,6 +42,9 @@ RULES:
 - Keep the text response concise and "Gamer/Cyberpunk" themed.
 - Types for Agenda: 'work', 'creative', 'transit', 'base', 'learning', 'sleep'.
 `;
+
+// Use 1.5-flash for production stability
+const MODEL_NAME = 'gemini-1.5-flash';
 
 export const sendMessageToGemini = async (
   history: { role: string; text: string }[], 
@@ -96,10 +98,8 @@ export const sendMessageToGemini = async (
 
     const finalSystemInstruction = `${SYSTEM_INSTRUCTION_BASE}\n${langInstruction}\n\n=== LIVE SYSTEM DATA ===${contextData}`;
     
-    const model = 'gemini-2.5-flash';
-    
     const chat = ai.chats.create({
-      model: model,
+      model: MODEL_NAME,
       config: {
         systemInstruction: finalSystemInstruction,
       },
@@ -117,8 +117,8 @@ export const sendMessageToGemini = async (
   } catch (error) {
     console.error("Gemini Error:", error);
     return lang === 'es' 
-      ? "Error de conexión con el Núcleo de IA." 
-      : "Connection failure with AI Core.";
+      ? "Error de conexión con el Núcleo de IA. Verifica tu conexión." 
+      : "Connection failure with AI Core. Check connection.";
   }
 };
 
@@ -129,7 +129,6 @@ export const generateVideoScript = async (
 ): Promise<string> => {
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const model = 'gemini-2.5-flash';
 
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
         
@@ -154,7 +153,7 @@ export const generateVideoScript = async (
         `;
 
         const result = await ai.models.generateContent({
-            model: model,
+            model: MODEL_NAME,
             contents: prompt
         });
 
@@ -172,7 +171,6 @@ export const generateStreamTitles = async (
 ): Promise<string[]> => {
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const model = 'gemini-2.5-flash';
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
 
         const prompt = `
@@ -190,7 +188,7 @@ export const generateStreamTitles = async (
         `;
 
         const result = await ai.models.generateContent({
-            model: model,
+            model: MODEL_NAME,
             contents: prompt
         });
 
@@ -211,7 +209,6 @@ export const analyzeThumbnail = async (
 ): Promise<VisionAnalysis> => {
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const model = 'gemini-2.5-flash';
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
 
         const prompt = `
@@ -231,7 +228,7 @@ export const analyzeThumbnail = async (
         const cleanBase64 = base64Image.split(',')[1] || base64Image;
 
         const result = await ai.models.generateContent({
-            model: model,
+            model: MODEL_NAME,
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
@@ -259,7 +256,6 @@ export const analyzeThumbnail = async (
 export const generateLootChallenge = async (lang: Language, context?: string): Promise<LootChallenge> => {
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const model = 'gemini-2.5-flash';
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
 
         const prompt = `
@@ -278,7 +274,7 @@ export const generateLootChallenge = async (lang: Language, context?: string): P
         `;
 
         const result = await ai.models.generateContent({
-            model: model,
+            model: MODEL_NAME,
             contents: prompt
         });
 
@@ -302,7 +298,6 @@ export const generateBriefing = async (
 ): Promise<string> => {
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const model = 'gemini-2.5-flash';
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
 
         const nextItem = agenda.find(i => !i.completed);
@@ -321,7 +316,7 @@ export const generateBriefing = async (
         `;
 
         const result = await ai.models.generateContent({
-            model: model,
+            model: MODEL_NAME,
             contents: prompt
         });
 
@@ -337,7 +332,6 @@ export const processDebrief = async (
 ): Promise<{ itemsToAdd: string[], itemsToRemove: string[] }> => {
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const model = 'gemini-2.5-flash';
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
 
         const prompt = `
@@ -355,7 +349,7 @@ export const processDebrief = async (
         `;
 
         const result = await ai.models.generateContent({
-            model: model,
+            model: MODEL_NAME,
             contents: prompt
         });
 
