@@ -48,7 +48,9 @@ export const translations = {
         focus: 'Boost via Login Streak',
         technique: 'Boost via Unlocking Badges'
       },
-      heatmap: 'Activity Log'
+      heatmap: 'Activity Log',
+      briefing: 'Audio Briefing',
+      loot: 'Generate Loot'
     },
     agenda: {
       title: 'Tactical Timeline',
@@ -109,7 +111,7 @@ export const translations = {
         confirmDelete: 'Delete Project? Accumulated XP will be deducted.'
       },
       detail: {
-        tabs: { details: 'Specs', script: 'AI Script' },
+        tabs: { details: 'Specs', script: 'AI Script', vision: 'Vision Analysis' },
         mentalBlock: 'Creative Unblock',
         vibe: 'Tone / Vibe',
         context: 'Scenario (Context)',
@@ -134,6 +136,13 @@ export const translations = {
                 followers: 'Recruitment',
                 sales: 'Loot/Promo'
             }
+        },
+        vision: {
+            upload: 'Upload Thumbnail',
+            analyze: 'Analyze Visuals',
+            analyzing: 'Scanning...',
+            score: 'CTR Potential',
+            drop: 'Drop Image Here'
         }
       }
     },
@@ -230,7 +239,27 @@ export const translations = {
         add: 'Add',
         onAir: 'ON AIR',
         drinkReminder: 'HYDRATE',
-        end: 'END TRANSMISSION'
+        end: 'END TRANSMISSION',
+        debrief: {
+            title: 'MISSION DEBRIEF',
+            prompt: 'Record mission log: What went wrong? What went right?',
+            listening: 'Recording Log...',
+            processing: 'Analyzing Log...',
+            saved: 'Checklist Updated'
+        }
+    },
+    loot: {
+        title: 'LOOT CRATE',
+        open: 'OPEN CRATE',
+        contextPlaceholder: 'Game/Activity (e.g., Minecraft, Cooking)',
+        rarity: {
+            common: 'COMMON',
+            rare: 'RARE',
+            legendary: 'LEGENDARY'
+        },
+        accept: 'ACCEPT CHALLENGE',
+        reroll: 'REROLL',
+        desc: 'Procedural Challenge Generator'
     }
   },
   es: {
@@ -279,7 +308,9 @@ export const translations = {
         focus: 'Sube manteniendo tu Racha diaria',
         technique: 'Sube desbloqueando nuevas Medallas'
       },
-      heatmap: 'Registro de Actividad'
+      heatmap: 'Registro de Actividad',
+      briefing: 'Briefing Voz',
+      loot: 'Generar Loot'
     },
     agenda: {
       title: 'Línea Temporal Táctica',
@@ -340,7 +371,7 @@ export const translations = {
         confirmDelete: '¿Eliminar Proyecto? Se descontará la XP acumulada.'
       },
       detail: {
-        tabs: { details: 'Specs', script: 'IA Guionista' },
+        tabs: { details: 'Specs', script: 'IA Guionista', vision: 'Visión Táctica' },
         mentalBlock: 'Desbloqueo Creativo',
         vibe: 'Vibe / Tono',
         context: 'Escenario (Contexto)',
@@ -365,6 +396,13 @@ export const translations = {
                 followers: 'Reclutamiento',
                 sales: 'Loot/Promo'
             }
+        },
+        vision: {
+            upload: 'Subir Miniatura',
+            analyze: 'Analizar Visuales',
+            analyzing: 'Escaneando...',
+            score: 'Potencial CTR',
+            drop: 'Soltar Imagen Aquí'
         }
       }
     },
@@ -461,7 +499,27 @@ export const translations = {
         add: 'Añadir',
         onAir: 'EN VIVO',
         drinkReminder: 'HIDRATAR',
-        end: 'FINALIZAR TRANSMISIÓN'
+        end: 'FINALIZAR TRANSMISIÓN',
+        debrief: {
+            title: 'DEBRIEFING DE MISIÓN',
+            prompt: 'Grabar bitácora: ¿Qué falló? ¿Qué salió bien?',
+            listening: 'Grabando Bitácora...',
+            processing: 'Analizando Log...',
+            saved: 'Checklist Actualizado'
+        }
+    },
+    loot: {
+        title: 'CAJA DE LOOT',
+        open: 'ABRIR CAJA',
+        contextPlaceholder: 'Juego/Actividad (ej. Minecraft, Cocinando)',
+        rarity: {
+            common: 'COMÚN',
+            rare: 'RARO',
+            legendary: 'LEGENDARIO'
+        },
+        accept: 'ACEPTAR RETO',
+        reroll: 'RELANZAR',
+        desc: 'Generador de Desafíos Procedurales'
     }
   }
 };

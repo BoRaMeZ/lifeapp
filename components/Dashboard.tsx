@@ -1,9 +1,10 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PlayerStats, Language, UserProfile, AgendaItem, DailyTask } from '../types';
-import { Activity, Zap, Trophy, Settings, Radio, Crosshair, Cpu, Box, Target, Brain, Heart, User } from 'lucide-react';
+import { Activity, Zap, Trophy, Settings, Radio, Crosshair, Cpu, Box, Target, Brain, Heart, User, Headphones, Dices } from 'lucide-react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { getTranslation } from '../utils/translations';
+import { generateBriefing } from '../services/geminiService';
 
 interface DashboardProps {
   stats: PlayerStats;
@@ -14,11 +15,35 @@ interface DashboardProps {
   tasks: DailyTask[];
   onOpenSettings: () => void;
   onStartStream: () => void;
+  onOpenLoot: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ stats, lang, badges, userProfile, agenda, tasks, onOpenSettings, onStartStream }) => {
+const Dashboard: React.FC<DashboardProps> = ({ stats, lang, badges, userProfile, agenda, tasks, onOpenSettings, onStartStream, onOpenLoot }) => {
   const t = getTranslation(lang);
   const xpProgress = Math.min(100, (stats.currentXP / stats.nextLevelXP) * 100);
+  const [isPlayingBriefing, setIsPlayingBriefing] = useState(false);
+
+  // --- VOICE BRIEFING LOGIC ---
+  const handleBriefing = async () => {
+    if (isPlayingBriefing) {
+        window.speechSynthesis.cancel();
+        setIsPlayingBriefing(false);
+        return;
+    }
+
+    setIsPlayingBriefing(true);
+    const text = await generateBriefing(agenda, stats, lang);
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    // Try to find a good voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(v => v.lang.startsWith(lang) && v.name.includes('Google'));
+    if (preferredVoice) utterance.voice = preferredVoice;
+    
+    utterance.onend = () => setIsPlayingBriefing(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
 
   // --- ACTIVE QUEST LOGIC ---
   const getActiveQuest = () => {
@@ -138,15 +163,33 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, lang, badges, userProfile,
                  </div>
              </div>
 
-             {(activeQuest?.type === 'stream' || activeQuest?.type === 'prep') && (
-                 <button onClick={onStartStream} className={`z-10 font-bold px-6 py-2 rounded-sm clip-path-polygon transition-all animate-bounce ${
-                     activeQuest.type === 'stream' 
-                        ? 'bg-pink-600 hover:bg-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.5)]' 
-                        : 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_15px_rgba(234,179,8,0.5)]'
-                 }`}>
-                     {t.dashboard.goLive}
-                 </button>
-             )}
+             <div className="flex items-center gap-3 z-10">
+                {/* OMNI-SENSES ACTIONS */}
+                <button 
+                    onClick={handleBriefing} 
+                    className={`p-2 rounded-lg border transition-all ${isPlayingBriefing ? 'bg-cyber-cyan text-black border-cyber-cyan animate-pulse' : 'bg-cyber-800 text-gray-400 border-cyber-700 hover:text-white'}`}
+                    title={t.dashboard.briefing}
+                >
+                    <Headphones size={20} />
+                </button>
+                <button 
+                    onClick={onOpenLoot} 
+                    className="p-2 rounded-lg border bg-cyber-800 text-cyber-purple border-cyber-700 hover:text-white hover:border-cyber-purple transition-all"
+                    title={t.dashboard.loot}
+                >
+                    <Dices size={20} />
+                </button>
+
+                {(activeQuest?.type === 'stream' || activeQuest?.type === 'prep') && (
+                    <button onClick={onStartStream} className={`ml-2 font-bold px-4 py-2 rounded-sm clip-path-polygon transition-all animate-bounce ${
+                        activeQuest.type === 'stream' 
+                            ? 'bg-pink-600 hover:bg-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.5)]' 
+                            : 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_15px_rgba(234,179,8,0.5)]'
+                    }`}>
+                        {t.dashboard.goLive}
+                    </button>
+                )}
+             </div>
           </div>
       </div>
 

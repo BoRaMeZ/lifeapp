@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
-import { ProjectCard, Language, ScriptData } from '../types';
-import { generateVideoScript } from '../services/geminiService';
-import { X, Bot, Sparkles, Save, FileText, LayoutTemplate, Copy } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ProjectCard, Language, ScriptData, VisionAnalysis } from '../types';
+import { generateVideoScript, analyzeThumbnail } from '../services/geminiService';
+import { X, Bot, Sparkles, Save, FileText, LayoutTemplate, Copy, Eye, Upload, Image as ImageIcon } from 'lucide-react';
 import { getTranslation } from '../utils/translations';
 
 interface StudioDetailModalProps {
@@ -14,8 +14,9 @@ interface StudioDetailModalProps {
 
 const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, onClose, onUpdate }) => {
   const t = getTranslation(lang);
-  const [activeTab, setActiveTab] = useState<'details' | 'script'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'script' | 'vision'>('details');
   const [isGenerating, setIsGenerating] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Local State for edits
   const [title, setTitle] = useState(project.title);
@@ -29,12 +30,17 @@ const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, on
       generatedContent: ''
   });
 
+  // Vision Data State
+  const [visionData, setVisionData] = useState<VisionAnalysis | undefined>(project.visionAnalysis);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   const handleSave = () => {
       onUpdate({
           ...project,
           title,
           category,
-          script: scriptData
+          script: scriptData,
+          visionAnalysis: visionData
       });
       onClose();
   };
@@ -45,6 +51,22 @@ const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, on
       const content = await generateVideoScript(project, scriptData, lang);
       setScriptData(prev => ({ ...prev, generatedContent: content }));
       setIsGenerating(false);
+  };
+
+  const handleVisionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+          const base64 = reader.result as string;
+          setPreviewImage(base64);
+          setIsGenerating(true);
+          const analysis = await analyzeThumbnail(base64, lang);
+          setVisionData(analysis);
+          setIsGenerating(false);
+      };
+      reader.readAsDataURL(file);
   };
 
   const copyScript = () => {
@@ -82,11 +104,19 @@ const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, on
                 >
                     <Bot size={16} /> {t.studio.detail.tabs.script}
                 </button>
+                <button 
+                    onClick={() => setActiveTab('vision')}
+                    className={`flex-1 py-3 font-bold text-sm flex items-center justify-center gap-2 transition-colors ${activeTab === 'vision' ? 'text-pink-500 border-b-2 border-pink-500 bg-pink-500/5' : 'text-gray-500 hover:text-white'}`}
+                >
+                    <Eye size={16} /> {t.studio.detail.tabs.vision}
+                </button>
             </div>
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6 bg-cyber-900">
-                {activeTab === 'details' ? (
+                
+                {/* --- DETAILS TAB --- */}
+                {activeTab === 'details' && (
                     <div className="space-y-6 max-w-lg mx-auto">
                         <div>
                             <label className="text-xs text-gray-500 uppercase mb-1 block">Title</label>
@@ -107,7 +137,10 @@ const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, on
                             />
                         </div>
                     </div>
-                ) : (
+                )}
+
+                {/* --- SCRIPT TAB --- */}
+                {activeTab === 'script' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
                         {/* Form Side */}
                         <div className="space-y-4">
@@ -188,6 +221,81 @@ const StudioDetailModal: React.FC<StudioDetailModalProps> = ({ project, lang, on
                                 )}
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* --- VISION TAB --- */}
+                {activeTab === 'vision' && (
+                    <div className="h-full flex flex-col md:flex-row gap-6">
+                         <div className="md:w-1/2 flex flex-col gap-4">
+                             <div 
+                                className="flex-1 bg-cyber-900 border-2 border-dashed border-cyber-700 rounded-xl flex items-center justify-center relative cursor-pointer hover:border-pink-500 transition-colors group overflow-hidden"
+                                onClick={() => fileInputRef.current?.click()}
+                             >
+                                 {previewImage ? (
+                                     <img src={previewImage} alt="Preview" className="w-full h-full object-contain" />
+                                 ) : (
+                                     <div className="text-center p-6">
+                                         <ImageIcon size={48} className="mx-auto text-gray-600 group-hover:text-pink-500 mb-2 transition-colors" />
+                                         <p className="text-gray-400 font-bold">{t.studio.detail.vision.upload}</p>
+                                         <p className="text-xs text-gray-600">{t.studio.detail.vision.drop}</p>
+                                     </div>
+                                 )}
+                                 <input 
+                                    type="file" 
+                                    ref={fileInputRef} 
+                                    onChange={handleVisionUpload} 
+                                    accept="image/*" 
+                                    className="hidden" 
+                                />
+                                {isGenerating && (
+                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
+                                        <div className="bg-cyber-900 border border-pink-500 rounded-lg p-4 flex items-center gap-3">
+                                            <div className="animate-spin w-5 h-5 border-2 border-pink-500 border-t-transparent rounded-full"></div>
+                                            <span className="text-pink-500 font-mono text-sm">{t.studio.detail.vision.analyzing}</span>
+                                        </div>
+                                    </div>
+                                )}
+                             </div>
+                         </div>
+
+                         <div className="md:w-1/2 bg-cyber-800/50 border border-cyber-700 rounded-xl p-6 overflow-y-auto">
+                             {visionData ? (
+                                 <div className="space-y-6">
+                                     <div className="flex items-center justify-between">
+                                         <h3 className="text-pink-500 font-bold uppercase tracking-wider">{t.studio.detail.vision.score}</h3>
+                                         <div className="text-3xl font-display font-bold text-white">{visionData.score}/100</div>
+                                     </div>
+                                     <div className="h-2 bg-cyber-900 rounded-full overflow-hidden">
+                                         <div 
+                                            className={`h-full transition-all duration-1000 ${visionData.score > 80 ? 'bg-green-500' : visionData.score > 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                            style={{ width: `${visionData.score}%` }}
+                                         ></div>
+                                     </div>
+
+                                     <div className="p-4 bg-cyber-900/50 rounded-lg border border-cyber-700/50">
+                                         <p className="text-gray-200 italic">"{visionData.critique}"</p>
+                                     </div>
+
+                                     <div>
+                                         <h4 className="text-xs text-gray-500 uppercase mb-2">Improvements</h4>
+                                         <ul className="space-y-2">
+                                             {visionData.improvements.map((imp, i) => (
+                                                 <li key={i} className="flex gap-2 text-sm text-gray-300">
+                                                     <span className="text-pink-500 font-bold">•</span>
+                                                     {imp}
+                                                 </li>
+                                             ))}
+                                         </ul>
+                                     </div>
+                                 </div>
+                             ) : (
+                                 <div className="h-full flex flex-col items-center justify-center text-gray-500">
+                                     <Eye size={32} className="mb-2 opacity-50"/>
+                                     <p>{t.studio.detail.waiting}</p>
+                                 </div>
+                             )}
+                         </div>
                     </div>
                 )}
             </div>

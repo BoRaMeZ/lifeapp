@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
-import { generateStreamTitles } from '../services/geminiService';
+import React, { useState, useEffect, useRef } from 'react';
+import { generateStreamTitles, processDebrief } from '../services/geminiService';
 import { Language } from '../types';
 import { getTranslation } from '../utils/translations';
-import { Radio, Mic, Droplets, Monitor, Zap, Copy, X, CheckSquare, Square, Plus, Trash2 } from 'lucide-react';
+import { Radio, Mic, Droplets, Monitor, Zap, Copy, X, CheckSquare, Square, Plus, Trash2, Save, MicOff, Loader2, CheckCircle } from 'lucide-react';
 
 interface StreamLauncherProps {
   lang: Language;
@@ -20,7 +20,7 @@ interface ChecklistItem {
 
 const StreamLauncher: React.FC<StreamLauncherProps> = ({ lang, onClose, onComplete }) => {
   const t = getTranslation(lang);
-  const [step, setStep] = useState<'checklist' | 'titles' | 'live'>('checklist');
+  const [step, setStep] = useState<'checklist' | 'titles' | 'live' | 'debrief'>('checklist');
   const [game, setGame] = useState('');
   const [vibe, setVibe] = useState('');
   const [generatedTitles, setGeneratedTitles] = useState<string[]>([]);
@@ -31,6 +31,12 @@ const StreamLauncher: React.FC<StreamLauncherProps> = ({ lang, onClose, onComple
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Debrief State
+  const [isListening, setIsListening] = useState(false);
+  const [debriefTranscript, setDebriefTranscript] = useState('');
+  const [isProcessingDebrief, setIsProcessingDebrief] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   // Init Checklist (Load from local or defaults)
   useEffect(() => {
@@ -117,6 +123,70 @@ const StreamLauncher: React.FC<StreamLauncherProps> = ({ lang, onClose, onComple
       navigator.clipboard.writeText(text);
   };
 
+  // --- DEBRIEF LOGIC ---
+  const toggleMic = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert(t.aiCoach.mic.unsupported);
+        return;
+    }
+
+    if (isListening) {
+        recognitionRef.current?.stop();
+        setIsListening(false);
+    } else {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.lang = lang === 'es' ? 'es-ES' : 'en-US';
+
+        recognitionRef.current.onstart = () => setIsListening(true);
+        recognitionRef.current.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            setDebriefTranscript(prev => prev ? `${prev} ${transcript}` : transcript);
+        };
+        recognitionRef.current.onend = () => setIsListening(false);
+        recognitionRef.current.start();
+    }
+  };
+
+  const handleFinishDebrief = async () => {
+      if (!debriefTranscript) {
+          onClose();
+          return;
+      }
+      setIsProcessingDebrief(true);
+      
+      const analysis = await processDebrief(debriefTranscript, lang);
+      
+      // Update checklist
+      setChecklistItems(prev => {
+          let updated = [...prev];
+          
+          // Remove items
+          updated = updated.filter(item => {
+              const label = getLabel(item).toLowerCase();
+              return !analysis.itemsToRemove.some(rem => label.includes(rem.toLowerCase()));
+          });
+
+          // Add items
+          analysis.itemsToAdd.forEach(newItemStr => {
+              updated.push({
+                  id: Date.now().toString() + Math.random(),
+                  text: newItemStr,
+                  checked: false
+              });
+          });
+
+          // Uncheck everything for next time
+          return updated.map(i => ({...i, checked: false}));
+      });
+
+      setIsProcessingDebrief(false);
+      onClose();
+  };
+
+
   if (step === 'live') {
       return (
           <div className="fixed inset-0 bg-black z-[60] flex flex-col items-center justify-center p-6 animate-fade-in border-4 border-pink-600">
@@ -140,7 +210,7 @@ const StreamLauncher: React.FC<StreamLauncherProps> = ({ lang, onClose, onComple
                   </div>
 
                   <button 
-                    onClick={onClose}
+                    onClick={() => setStep('debrief')}
                     className="mt-12 text-gray-600 hover:text-white border border-gray-800 hover:border-white px-8 py-3 rounded-full transition-all"
                   >
                       {t.stream.end}
@@ -276,6 +346,43 @@ const StreamLauncher: React.FC<StreamLauncherProps> = ({ lang, onClose, onComple
                                  GO LIVE
                              </button>
                         </div>
+                    </div>
+                )}
+
+                {step === 'debrief' && (
+                    <div className="space-y-6 flex flex-col items-center justify-center h-full">
+                         <Save size={48} className="text-cyber-purple mb-2" />
+                         <h3 className="text-2xl font-display text-white">{t.stream.debrief.title}</h3>
+                         <p className="text-gray-400 text-center max-w-sm">{t.stream.debrief.prompt}</p>
+
+                         <div className="w-full bg-cyber-800/50 p-4 rounded-xl border border-cyber-700 min-h-[100px] text-gray-300 whitespace-pre-wrap">
+                             {debriefTranscript || "Listening..."}
+                         </div>
+
+                         <button 
+                            onClick={toggleMic}
+                            className={`p-6 rounded-full transition-all ${isListening ? 'bg-red-500 text-white animate-pulse shadow-[0_0_30px_rgba(239,68,68,0.5)]' : 'bg-cyber-700 text-gray-300 hover:bg-cyber-600'}`}
+                         >
+                             {isListening ? <MicOff size={32}/> : <Mic size={32}/>}
+                         </button>
+
+                         <div className="flex justify-center w-full mt-auto">
+                            <button 
+                                onClick={handleFinishDebrief}
+                                disabled={isProcessingDebrief}
+                                className="bg-cyber-cyan text-black px-8 py-3 rounded-lg font-bold hover:bg-white transition-colors flex items-center gap-2"
+                            >
+                                {isProcessingDebrief ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={20}/> {t.stream.debrief.processing}
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle size={20} /> {t.stream.debrief.saved}
+                                    </>
+                                )}
+                            </button>
+                         </div>
                     </div>
                 )}
             </div>

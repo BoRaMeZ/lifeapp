@@ -1,6 +1,6 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { Language, PlayerStats, ProjectCard, AgendaItem, UserProfile, DailyTask, ScriptData } from "../types";
+import { Language, PlayerStats, ProjectCard, AgendaItem, UserProfile, DailyTask, ScriptData, VisionAnalysis, LootChallenge } from "../types";
 
 const SYSTEM_INSTRUCTION_BASE = `
 You are "StreamOS," an elite productivity AI Agent for a streamer with a full-time job.
@@ -200,5 +200,169 @@ export const generateStreamTitles = async (
 
     } catch (e) {
         return ["Error generating titles", "Try again", "System Offline"];
+    }
+}
+
+// --- MULTIMODAL FEATURES ---
+
+export const analyzeThumbnail = async (
+    base64Image: string,
+    lang: Language
+): Promise<VisionAnalysis> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const model = 'gemini-2.5-flash';
+        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
+
+        const prompt = `
+        ACT AS A YOUTUBE/THUMBNAIL EXPERT.
+        Analyze this image for Click-Through Rate (CTR) potential.
+        ${langInstruction}
+
+        RETURN A JSON OBJECT (No markdown, just JSON):
+        {
+            "score": 0-100 (number),
+            "critique": "Brief 1 sentence summary",
+            "improvements": ["Point 1", "Point 2", "Point 3"]
+        }
+        `;
+
+        // Strip data:image/png;base64, prefix if present
+        const cleanBase64 = base64Image.split(',')[1] || base64Image;
+
+        const result = await ai.models.generateContent({
+            model: model,
+            contents: {
+                parts: [
+                    { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
+                    { text: prompt }
+                ]
+            }
+        });
+
+        const text = result.text || "{}";
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+        throw new Error("Invalid JSON");
+    } catch (e) {
+        console.error("Vision Error", e);
+        return {
+            score: 0,
+            critique: lang === 'es' ? "Error analizando imagen." : "Error analyzing image.",
+            improvements: []
+        };
+    }
+}
+
+export const generateLootChallenge = async (lang: Language, context?: string): Promise<LootChallenge> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const model = 'gemini-2.5-flash';
+        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
+
+        const prompt = `
+        GENERATE A PROCEDURAL GAMER CHALLENGE (Stream Loot).
+        CONTEXT/GAME: ${context || 'General Streaming/Gaming'}
+        It should be fun, absurd, or difficult for a streamer.
+        ${langInstruction}
+
+        RETURN JSON:
+        {
+            "title": "Challenge Name",
+            "description": "What to do",
+            "xpReward": number (50-500),
+            "rarity": "common" | "rare" | "legendary"
+        }
+        `;
+
+        const result = await ai.models.generateContent({
+            model: model,
+            contents: prompt
+        });
+
+        const jsonMatch = (result.text || "").match(/\{[\s\S]*\}/);
+        if (jsonMatch) return JSON.parse(jsonMatch[0]);
+        throw new Error("No JSON");
+    } catch (e) {
+        return {
+            title: "System Glitch",
+            description: "Reload the system.",
+            xpReward: 10,
+            rarity: "common"
+        };
+    }
+}
+
+export const generateBriefing = async (
+    agenda: AgendaItem[],
+    stats: PlayerStats,
+    lang: Language
+): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const model = 'gemini-2.5-flash';
+        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
+
+        const nextItem = agenda.find(i => !i.completed);
+        const nextTask = nextItem ? `${nextItem.startTime}: ${nextItem.title}` : "No missions scheduled";
+
+        const prompt = `
+        ACT AS A MILITARY/SCI-FI INTELLIGENCE OFFICER (JARVIS/CORTANA STYLE).
+        Write a very short (2 sentences) tactical audio briefing for the user.
+        
+        CONTEXT:
+        - Streak: ${stats.streak} days
+        - Next Mission: ${nextTask}
+        
+        ${langInstruction}
+        Make it sound cool and encouraging. No emojis. Just text for TTS.
+        `;
+
+        const result = await ai.models.generateContent({
+            model: model,
+            contents: prompt
+        });
+
+        return result.text || "Systems online.";
+    } catch (e) {
+        return lang === 'es' ? "Sistemas en línea. Listo para órdenes." : "Systems online. Ready for orders.";
+    }
+}
+
+export const processDebrief = async (
+    transcript: string,
+    lang: Language
+): Promise<{ itemsToAdd: string[], itemsToRemove: string[] }> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const model = 'gemini-2.5-flash';
+        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
+
+        const prompt = `
+        ANALYZE THIS POST-STREAM DEBRIEF LOG.
+        Transcript: "${transcript}"
+
+        Determine if the user mentioned any technical failures that need to be checked next time (ADD to checklist) or things that are fixed (REMOVE).
+
+        RETURN JSON:
+        {
+            "itemsToAdd": ["Mic Check", "Adjust Bitrate"],
+            "itemsToRemove": ["Old item"]
+        }
+        If nothing, return empty arrays.
+        `;
+
+        const result = await ai.models.generateContent({
+            model: model,
+            contents: prompt
+        });
+
+        const jsonMatch = (result.text || "").match(/\{[\s\S]*\}/);
+        if (jsonMatch) return JSON.parse(jsonMatch[0]);
+        return { itemsToAdd: [], itemsToRemove: [] };
+    } catch (e) {
+        return { itemsToAdd: [], itemsToRemove: [] };
     }
 }

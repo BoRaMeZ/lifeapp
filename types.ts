@@ -17,6 +17,19 @@ export interface ScriptData {
   generatedContent?: string;
 }
 
+export interface VisionAnalysis {
+    score: number;
+    critique: string;
+    improvements: string[];
+}
+
+export interface LootChallenge {
+    title: string;
+    description: string;
+    xpReward: number;
+    rarity: 'common' | 'rare' | 'legendary';
+}
+
 export interface ProjectCard {
   id: string;
   title: string;
@@ -25,6 +38,7 @@ export interface ProjectCard {
   status: ProjectStatus;
   createdAt: number;
   script?: ScriptData; // New: Stores the AI script
+  visionAnalysis?: VisionAnalysis; // New: Stores AI visual analysis
 }
 
 export interface AgendaItem {

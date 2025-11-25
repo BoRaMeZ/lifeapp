@@ -9,6 +9,7 @@ import AICoach from './components/AICoach';
 import SettingsModal from './components/SettingsModal';
 import LevelUpModal from './components/LevelUpModal';
 import StreamLauncher from './components/StreamLauncher';
+import LootModal from './components/LootModal';
 import { LayoutDashboard, Calendar, Video, Home, MessageSquare, Terminal, Globe, Award, Settings } from 'lucide-react';
 import { getTranslation } from './utils/translations';
 
@@ -70,6 +71,7 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showStreamLauncher, setShowStreamLauncher] = useState(false); 
+  const [showLoot, setShowLoot] = useState(false);
 
   // 1. LOAD DATA ON MOUNT
   useEffect(() => {
@@ -219,6 +221,7 @@ const App: React.FC = () => {
           tasks={dailyTasks}   // Pass data for HUD
           onOpenSettings={() => setIsSettingsOpen(true)}
           onStartStream={() => setShowStreamLauncher(true)}
+          onOpenLoot={() => setShowLoot(true)}
         />;
       case AppTab.AGENDA:
         return <Agenda 
@@ -257,6 +260,7 @@ const App: React.FC = () => {
             tasks={dailyTasks}
             onOpenSettings={() => setIsSettingsOpen(true)} 
             onStartStream={() => setShowStreamLauncher(true)} 
+            onOpenLoot={() => setShowLoot(true)}
         />;
     }
   };
@@ -272,9 +276,9 @@ const App: React.FC = () => {
   if (!isInitialized) return <div className="min-h-screen bg-[#050b14] flex items-center justify-center text-cyber-cyan font-mono">BOOTING KAIROS...</div>;
 
   return (
-    <div className={`theme-${theme} min-h-screen bg-cyber-900 text-gray-200 font-sans selection:bg-cyber-cyan selection:text-black transition-colors duration-500`}>
+    <div className={`theme-${theme} min-h-screen bg-transparent text-gray-200 font-sans selection:bg-cyber-cyan selection:text-black transition-colors duration-500`}>
       {/* Mobile Header */}
-      <div className="md:hidden bg-cyber-900 border-b border-cyber-700 p-4 flex justify-between items-center sticky top-0 z-50">
+      <div className="md:hidden bg-cyber-900/80 backdrop-blur-md border-b border-cyber-700 p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2">
             <Terminal className="text-cyber-cyan" size={24} />
             <span className="font-display font-bold text-lg tracking-wider">KAIROS.OS</span>
@@ -282,7 +286,7 @@ const App: React.FC = () => {
         <div className="flex items-center gap-3">
              <button 
                 onClick={toggleLanguage}
-                className="text-xs font-mono font-bold border border-cyber-700 bg-cyber-800 px-2 py-1 rounded text-cyber-cyan hover:bg-cyber-700"
+                className="text-xs font-mono font-bold border border-cyber-700 bg-cyber-800/50 px-2 py-1 rounded text-cyber-cyan hover:bg-cyber-700"
             >
                 {lang.toUpperCase()}
             </button>
@@ -297,14 +301,14 @@ const App: React.FC = () => {
 
       <div className="flex h-screen overflow-hidden">
         {/* Sidebar (Desktop) */}
-        <aside className="hidden md:flex w-64 bg-cyber-900 border-r border-cyber-800 flex-col p-4 relative z-20">
+        <aside className="hidden md:flex w-64 bg-cyber-900/80 backdrop-blur-md border-r border-cyber-800 flex-col p-4 relative z-20">
           <div className="flex items-center gap-3 mb-10 px-2 mt-2">
             <div className="bg-cyber-cyan/20 p-2 rounded-lg border border-cyber-cyan/50">
                 <Terminal className="text-cyber-cyan" size={28} />
             </div>
             <div>
                 <h1 className="font-display font-bold text-xl text-white tracking-wider">KAIROS</h1>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest">OS v4.1 ELITE</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest">OS v5.0 OMNI</p>
             </div>
           </div>
 
@@ -335,7 +339,7 @@ const App: React.FC = () => {
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                     isActive 
                       ? 'bg-cyber-cyan text-black font-bold shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.4)]' 
-                      : 'text-gray-400 hover:bg-cyber-800 hover:text-white'
+                      : 'text-gray-400 hover:bg-cyber-800/50 hover:text-white'
                   }`}
                 >
                   <Icon size={20} className={`${isActive ? 'text-black' : 'group-hover:text-cyber-cyan transition-colors'}`} />
@@ -448,6 +452,14 @@ const App: React.FC = () => {
                 lang={lang}
                 onClose={() => setShowStreamLauncher(false)}
                 onComplete={() => {}}
+            />
+        )}
+
+        {showLoot && (
+            <LootModal
+                lang={lang}
+                onClose={() => setShowLoot(false)}
+                onAccept={gainXP}
             />
         )}
 
