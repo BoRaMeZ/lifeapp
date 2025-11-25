@@ -44,8 +44,8 @@ RULES:
 - Types for Agenda: 'work', 'creative', 'transit', 'base', 'learning', 'sleep'.
 `;
 
-// USE STABLE MODEL - 2.5 is often preview-gated and causes connection errors in Vercel
-const MODEL_NAME = 'gemini-1.5-flash';
+// USE LATEST EXPERIMENTAL MODEL - 2.0 Flash is the current state-of-the-art free model
+const MODEL_NAME = 'gemini-2.0-flash-exp';
 
 // DIRECT KEY INJECTION to bypass Vite/Vercel env issues
 const API_KEY = "AIzaSyD9lsVMXwFZZIScX0OZ-II6dyu0UT3bGJI";
