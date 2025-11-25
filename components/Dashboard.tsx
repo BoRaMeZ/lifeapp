@@ -86,11 +86,8 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, lang, badges, userProfile,
             return { type: 'prep', title: t.dashboard.prepStream, desc: `${t.dashboard.startsIn} ${diff}m • ${upcomingStream.title.toUpperCase()}` };
       }
 
-      // 2. Fallback: Is it Prime Time (> 9PM) and user hasn't scheduled anything?
-      // Only show this if no other block is active
-      if (mins > 21 * 60 && mins < 24 * 60) {
-          return { type: 'stream', title: t.dashboard.goLive, desc: 'PRIME TIME' };
-      }
+      // 2. Fallback REMOVED: No more automatic Prime Time assumption.
+      // Stream button only appears if explicity scheduled.
 
       // 3. Priority Task?
       const incompleteTask = tasks.find(t => !t.completed);

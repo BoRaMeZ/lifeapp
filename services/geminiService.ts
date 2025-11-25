@@ -43,8 +43,11 @@ RULES:
 - Types for Agenda: 'work', 'creative', 'transit', 'base', 'learning', 'sleep'.
 `;
 
-// Use 1.5-flash for production stability
-const MODEL_NAME = 'gemini-1.5-flash';
+// Revert to 2.5-flash as requested
+const MODEL_NAME = 'gemini-2.5-flash';
+
+// HARDCODED FALLBACK to ensure connection in Vercel/Production if env vars fail
+const API_KEY = process.env.API_KEY || "AIzaSyD9lsVMXwFZZIScX0OZ-II6dyu0UT3bGJI";
 
 export const sendMessageToGemini = async (
   history: { role: string; text: string }[], 
@@ -57,7 +60,7 @@ export const sendMessageToGemini = async (
   userProfile?: UserProfile
 ): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     
     // Add language instruction
     const langInstruction = lang === 'es' 
@@ -128,7 +131,7 @@ export const generateVideoScript = async (
   lang: Language
 ): Promise<string> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: API_KEY });
 
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
         
@@ -170,7 +173,7 @@ export const generateStreamTitles = async (
     lang: Language
 ): Promise<string[]> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: API_KEY });
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
 
         const prompt = `
@@ -208,7 +211,7 @@ export const analyzeThumbnail = async (
     lang: Language
 ): Promise<VisionAnalysis> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: API_KEY });
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
 
         const prompt = `
@@ -255,7 +258,7 @@ export const analyzeThumbnail = async (
 
 export const generateLootChallenge = async (lang: Language, context?: string): Promise<LootChallenge> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: API_KEY });
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
 
         const prompt = `
@@ -297,7 +300,7 @@ export const generateBriefing = async (
     lang: Language
 ): Promise<string> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: API_KEY });
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
 
         const nextItem = agenda.find(i => !i.completed);
@@ -331,7 +334,7 @@ export const processDebrief = async (
     lang: Language
 ): Promise<{ itemsToAdd: string[], itemsToRemove: string[] }> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: API_KEY });
         const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
 
         const prompt = `
