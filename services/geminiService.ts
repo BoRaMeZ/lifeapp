@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { Language, PlayerStats, ProjectCard, AgendaItem, UserProfile, DailyTask, ScriptData, VisionAnalysis, LootChallenge } from "../types";
 
@@ -43,12 +44,17 @@ RULES:
 - Types for Agenda: 'work', 'creative', 'transit', 'base', 'learning', 'sleep'.
 `;
 
-// Revert to 2.5-flash as requested
-const MODEL_NAME = 'gemini-2.5-flash';
+// USE STABLE MODEL - 2.5 is often preview-gated and causes connection errors in Vercel
+const MODEL_NAME = 'gemini-1.5-flash';
 
-// HARDCODED FALLBACK to ensure connection in Vercel/Production if env vars fail
-const API_KEY = process.env.API_KEY || "AIzaSyD9lsVMXwFZZIScX0OZ-II6dyu0UT3bGJI";
+// DIRECT KEY INJECTION to bypass Vite/Vercel env issues
+const API_KEY = "AIzaSyD9lsVMXwFZZIScX0OZ-II6dyu0UT3bGJI";
 
+const getAIClient = () => {
+    return new GoogleGenAI({ apiKey: API_KEY });
+};
+
+// --- CHAT & AGENT FUNCTION ---
 export const sendMessageToGemini = async (
   history: { role: string; text: string }[], 
   message: string, 
@@ -60,7 +66,7 @@ export const sendMessageToGemini = async (
   userProfile?: UserProfile
 ): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: API_KEY });
+    const ai = getAIClient();
     
     // Add language instruction
     const langInstruction = lang === 'es' 
@@ -75,291 +81,264 @@ export const sendMessageToGemini = async (
     }
 
     if (stats) {
-        contextData += `\nSTATS: Level ${stats.level}, XP ${stats.currentXP}, Streak ${stats.streak} days.`;
+        contextData += `\nSTATS: Level ${stats.level} | XP: ${stats.currentXP} | Streak: ${stats.streak} days`;
     }
 
-    if (projects) {
-        const ideas = projects.filter(p => p.status === 'idea').map(p => p.title).join(', ');
-        const recording = projects.filter(p => p.status === 'recording').map(p => p.title).join(', ');
-        const editing = projects.filter(p => p.status === 'editing').map(p => p.title).join(', ');
-        
-        contextData += `\nKANBAN STATUS:
-        - Ideas: [${ideas}]
-        - Recording: [${recording}]
-        - Editing: [${editing}]`;
+    if (agenda && agenda.length > 0) {
+        const simpleAgenda = agenda.map(i => `${i.startTime}-${i.endTime}: ${i.title} (${i.completed ? 'DONE' : 'TODO'})`).join(' | ');
+        contextData += `\nCURRENT AGENDA: [ ${simpleAgenda} ]`;
     }
 
-    if (agenda) {
-        const agendaSummary = agenda.map(i => `${i.startTime}-${i.endTime}: ${i.title} (${i.completed ? 'DONE' : 'PENDING'})`).join('\n');
-        contextData += `\nCURRENT AGENDA:\n${agendaSummary}`;
+    if (projects && projects.length > 0) {
+        const counts = { idea: 0, recording: 0, editing: 0, ready: 0 };
+        projects.forEach(p => counts[p.status]++);
+        contextData += `\nSTUDIO STATUS: Ideas:${counts.idea}, Recording:${counts.recording}, Editing:${counts.editing}, Ready:${counts.ready}`;
     }
 
-    if (tasks) {
-        const tasksSummary = tasks.map(t => `- ${t.title} (${t.completed ? 'DONE' : 'PENDING'})`).join('\n');
-        contextData += `\nBASE OPS TASKS:\n${tasksSummary}`;
+    if (tasks && tasks.length > 0) {
+        const pending = tasks.filter(t => !t.completed).map(t => t.title).join(', ');
+        contextData += `\nPENDING BASE OPS: ${pending || "None! All clear."}`;
     }
 
-    const finalSystemInstruction = `${SYSTEM_INSTRUCTION_BASE}\n${langInstruction}\n\n=== LIVE SYSTEM DATA ===${contextData}`;
-    
-    const chat = ai.chats.create({
-      model: MODEL_NAME,
-      config: {
-        systemInstruction: finalSystemInstruction,
-      },
-      history: history.map(h => ({
-        role: h.role,
-        parts: [{ text: h.text }]
-      })),
+    const systemInstruction = `${SYSTEM_INSTRUCTION_BASE}\n${langInstruction}\nCONTEXT DATA:\n${contextData}`;
+
+    // Convert history to format expected by GenerateContent
+    let fullPrompt = `${systemInstruction}\n\n`;
+    history.forEach(msg => {
+        fullPrompt += `${msg.role === 'user' ? 'USER' : 'MODEL'}: ${msg.text}\n`;
+    });
+    fullPrompt += `USER: ${message}`;
+
+    const response = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: { role: 'user', parts: [{ text: fullPrompt }] },
     });
 
-    const result = await chat.sendMessage({
-      message: message 
-    });
+    return response.text || (lang === 'es' ? "Error: Sin respuesta." : "Error: No response.");
 
-    return result.text || (lang === 'es' ? "Sistema Offline." : "System Offline.");
   } catch (error) {
     console.error("Gemini Error:", error);
     return lang === 'es' 
-      ? "Error de conexión con el Núcleo de IA. Verifica tu conexión." 
-      : "Connection failure with AI Core. Check connection.";
+        ? "⚠️ Error de conexión con el núcleo de IA. (Revisa tu API Key o conexión)" 
+        : "⚠️ AI Core Connection Error. (Check API Key or Network)";
   }
 };
 
-export const generateVideoScript = async (
-  project: ProjectCard, 
-  scriptData: ScriptData, 
-  lang: Language
-): Promise<string> => {
+// --- SCRIPT GENERATOR ---
+export const generateVideoScript = async (project: ProjectCard, scriptData: ScriptData, lang: Language): Promise<string> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: API_KEY });
-
-        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
-        
+        const ai = getAIClient();
         const prompt = `
-        ACT AS A VIRAL CONTENT SCREENWRITER FOR ${project.platform.toUpperCase()}.
-        ${langInstruction}
+        ACT AS: Expert Viral Scriptwriter.
+        TASK: Write a short video script (TikTok/Reels/Shorts).
+        LANGUAGE: ${lang === 'es' ? 'Spanish' : 'English'}.
         
-        PROJECT: "${project.title}"
-        CATEGORY: ${project.category}
+        PROJECT INFO:
+        - Title: ${project.title}
+        - Platform: ${project.platform}
+        - Category: ${project.category}
         
-        CONTEXT/IDEA: ${scriptData.context}
-        VIBE: ${scriptData.vibe}
-        GOAL: ${scriptData.goal}
+        PARAMETERS:
+        - Vibe: ${scriptData.vibe}
+        - Goal: ${scriptData.goal}
+        - Context/Story: ${scriptData.context}
         
         OUTPUT FORMAT:
-        Write a concise script with 3 sections:
-        1. **HOOK (0-3s)**: Grab attention immediately.
-        2. **BODY**: The main content/story. Keep it tight.
-        3. **CTA**: Call to action based on the goal.
+        [HOOK] (0-3s): ...
+        [BODY] (The story/content): ...
+        [CTA] (Call to action): ...
         
-        Use markdown. Keep it ready to read while recording.
+        Keep it punchy, engaging, and under 60 seconds spoken.
         `;
 
-        const result = await ai.models.generateContent({
+        const response = await ai.models.generateContent({
             model: MODEL_NAME,
-            contents: prompt
+            contents: { role: 'user', parts: [{ text: prompt }] }
         });
 
-        return result.text || (lang === 'es' ? "Error al generar guion." : "Error generating script.");
+        return response.text || "";
     } catch (e) {
-        console.error("Script Gen Error", e);
-        return lang === 'es' ? "Error de conexión." : "Connection Error.";
+        console.error(e);
+        return "Error generating script.";
     }
-}
+};
 
-export const generateStreamTitles = async (
-    game: string,
-    vibe: string,
-    lang: Language
-): Promise<string[]> => {
-    try {
-        const ai = new GoogleGenAI({ apiKey: API_KEY });
-        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
-
-        const prompt = `
-        Generate 3 CLICKBAIT stream titles for KICK/TWITCH.
-        GAME/TOPIC: ${game}
-        VIBE: ${vibe}
-        ${langInstruction}
-
-        Rules:
-        - Use CAPS lock for emphasis.
-        - Include 1 emoji per title.
-        - Keep it under 60 chars.
-        - Return ONLY the 3 titles separated by a pipe character "|".
-        Example: ROAD TO UNREAL 🏆 | CRANKING 90s NO SLEEP ⚡ | DROPPING 20 BOMBS 💣
-        `;
-
-        const result = await ai.models.generateContent({
-            model: MODEL_NAME,
-            contents: prompt
-        });
-
-        const text = result.text || "";
-        const titles = text.split('|').map(t => t.trim()).filter(t => t.length > 0);
-        return titles.length > 0 ? titles : ["Stream Title 1", "Stream Title 2", "Stream Title 3"];
-
-    } catch (e) {
-        return ["Error generating titles", "Try again", "System Offline"];
-    }
-}
-
-// --- MULTIMODAL FEATURES ---
-
-export const analyzeThumbnail = async (
-    base64Image: string,
-    lang: Language
-): Promise<VisionAnalysis> => {
-    try {
-        const ai = new GoogleGenAI({ apiKey: API_KEY });
-        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
-
-        const prompt = `
-        ACT AS A YOUTUBE/THUMBNAIL EXPERT.
-        Analyze this image for Click-Through Rate (CTR) potential.
-        ${langInstruction}
-
-        RETURN A JSON OBJECT (No markdown, just JSON):
-        {
-            "score": 0-100 (number),
-            "critique": "Brief 1 sentence summary",
-            "improvements": ["Point 1", "Point 2", "Point 3"]
-        }
-        `;
-
-        // Strip data:image/png;base64, prefix if present
-        const cleanBase64 = base64Image.split(',')[1] || base64Image;
-
-        const result = await ai.models.generateContent({
-            model: MODEL_NAME,
-            contents: {
-                parts: [
-                    { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
-                    { text: prompt }
-                ]
-            }
-        });
-
-        const text = result.text || "{}";
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
-        throw new Error("Invalid JSON");
-    } catch (e) {
-        console.error("Vision Error", e);
-        return {
-            score: 0,
-            critique: lang === 'es' ? "Error analizando imagen." : "Error analyzing image.",
-            improvements: []
-        };
-    }
-}
-
+// --- LOOT GENERATOR ---
 export const generateLootChallenge = async (lang: Language, context?: string): Promise<LootChallenge> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: API_KEY });
-        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
-
+        const ai = getAIClient();
+        const contextPrompt = context ? `CONTEXT: User is currently playing/doing: "${context}". Tailor the challenge to this.` : "CONTEXT: General gaming/productivity challenge.";
+        
         const prompt = `
-        GENERATE A PROCEDURAL GAMER CHALLENGE (Stream Loot).
-        CONTEXT/GAME: ${context || 'General Streaming/Gaming'}
-        It should be fun, absurd, or difficult for a streamer.
-        ${langInstruction}
-
-        RETURN JSON:
+        ACT AS: Video Game Loot Box System.
+        TASK: Generate a single procedural "Daily Challenge" for a streamer.
+        LANGUAGE: ${lang === 'es' ? 'Spanish' : 'English'}.
+        ${contextPrompt}
+        
+        OUTPUT JSON ONLY:
         {
-            "title": "Challenge Name",
-            "description": "What to do",
-            "xpReward": number (50-500),
+            "title": "Short catchy title",
+            "description": "Specific instruction (e.g. Win with only pistol / Edit for 1hr straight)",
+            "xpReward": number (between 50 and 500 based on difficulty),
             "rarity": "common" | "rare" | "legendary"
         }
         `;
 
-        const result = await ai.models.generateContent({
+        const response = await ai.models.generateContent({
             model: MODEL_NAME,
-            contents: prompt
+            contents: { role: 'user', parts: [{ text: prompt }] },
+            config: { responseMimeType: 'application/json' }
         });
 
-        const jsonMatch = (result.text || "").match(/\{[\s\S]*\}/);
-        if (jsonMatch) return JSON.parse(jsonMatch[0]);
-        throw new Error("No JSON");
+        const text = response.text || "{}";
+        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(jsonStr);
+
     } catch (e) {
+        console.error(e);
         return {
             title: "System Glitch",
-            description: "Reload the system.",
+            description: "Connection failed. Free XP granted.",
             xpReward: 10,
-            rarity: "common"
+            rarity: 'common'
         };
     }
-}
+};
 
-export const generateBriefing = async (
-    agenda: AgendaItem[],
-    stats: PlayerStats,
-    lang: Language
-): Promise<string> => {
+// --- VISION ANALYSIS ---
+export const analyzeThumbnail = async (base64Image: string, lang: Language): Promise<VisionAnalysis> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: API_KEY });
-        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
-
-        const nextItem = agenda.find(i => !i.completed);
-        const nextTask = nextItem ? `${nextItem.startTime}: ${nextItem.title}` : "No missions scheduled";
+        const ai = getAIClient();
+        
+        // Clean base64 string
+        const cleanBase64 = base64Image.split(',')[1] || base64Image;
 
         const prompt = `
-        ACT AS A MILITARY/SCI-FI INTELLIGENCE OFFICER (JARVIS/CORTANA STYLE).
-        Write a very short (2 sentences) tactical audio briefing for the user.
+        ACT AS: YouTube/Twitch CTR Expert.
+        TASK: Analyze this thumbnail image.
+        LANGUAGE: ${lang === 'es' ? 'Spanish' : 'English'}.
         
-        CONTEXT:
-        - Streak: ${stats.streak} days
-        - Next Mission: ${nextTask}
-        
-        ${langInstruction}
-        Make it sound cool and encouraging. No emojis. Just text for TTS.
-        `;
-
-        const result = await ai.models.generateContent({
-            model: MODEL_NAME,
-            contents: prompt
-        });
-
-        return result.text || "Systems online.";
-    } catch (e) {
-        return lang === 'es' ? "Sistemas en línea. Listo para órdenes." : "Systems online. Ready for orders.";
-    }
-}
-
-export const processDebrief = async (
-    transcript: string,
-    lang: Language
-): Promise<{ itemsToAdd: string[], itemsToRemove: string[] }> => {
-    try {
-        const ai = new GoogleGenAI({ apiKey: API_KEY });
-        const langInstruction = lang === 'es' ? 'Output strictly in Spanish.' : 'Output strictly in English.';
-
-        const prompt = `
-        ANALYZE THIS POST-STREAM DEBRIEF LOG.
-        Transcript: "${transcript}"
-
-        Determine if the user mentioned any technical failures that need to be checked next time (ADD to checklist) or things that are fixed (REMOVE).
-
-        RETURN JSON:
+        OUTPUT JSON ONLY:
         {
-            "itemsToAdd": ["Mic Check", "Adjust Bitrate"],
-            "itemsToRemove": ["Old item"]
+            "score": number (0-100),
+            "critique": "1 sentence summary of main issue or strength",
+            "improvements": ["bullet point 1", "bullet point 2", "bullet point 3"]
         }
-        If nothing, return empty arrays.
         `;
 
-        const result = await ai.models.generateContent({
+        const response = await ai.models.generateContent({
             model: MODEL_NAME,
-            contents: prompt
+            contents: {
+                role: 'user',
+                parts: [
+                    { text: prompt },
+                    { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
+                ]
+            },
+            config: { responseMimeType: 'application/json' }
         });
 
-        const jsonMatch = (result.text || "").match(/\{[\s\S]*\}/);
-        if (jsonMatch) return JSON.parse(jsonMatch[0]);
-        return { itemsToAdd: [], itemsToRemove: [] };
+        const text = response.text || "{}";
+        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(jsonStr);
+
+    } catch (e) {
+        console.error(e);
+        return {
+            score: 0,
+            critique: "Vision Module Offline.",
+            improvements: ["Check network connection", "Try a smaller image"]
+        };
+    }
+};
+
+// --- BRIEFING GENERATOR (TTS TEXT) ---
+export const generateBriefing = async (agenda: AgendaItem[], stats: PlayerStats, lang: Language): Promise<string> => {
+    try {
+        const ai = getAIClient();
+        
+        const activeItem = agenda.find(i => !i.completed) || agenda[0];
+        const nextTime = activeItem ? activeItem.startTime : "Unknown";
+        const nextTitle = activeItem ? activeItem.title : "Rest";
+
+        const prompt = `
+        ACT AS: Military/Sci-Fi AI Ops Chief (Jarvis/Cortana style).
+        TASK: Write a 2-sentence briefing for the user "Operator".
+        LANGUAGE: ${lang === 'es' ? 'Spanish' : 'English'}.
+        DATA:
+        - Time: ${new Date().getHours()}:00
+        - Next Mission: ${nextTitle} at ${nextTime}
+        - Current Streak: ${stats.streak} days
+        
+        Keep it immersive, tactical, and motivating. No emojis. Just text for speech synthesis.
+        `;
+
+        const response = await ai.models.generateContent({
+            model: MODEL_NAME,
+            contents: { role: 'user', parts: [{ text: prompt }] }
+        });
+
+        return response.text || (lang === 'es' ? "Sistemas listos. Adelante." : "Systems online. Good luck.");
+    } catch (e) {
+        return lang === 'es' ? "Error generando briefing." : "Briefing generation error.";
+    }
+};
+
+// --- DEBRIEF PROCESSOR ---
+export const processDebrief = async (transcript: string, lang: Language): Promise<{itemsToAdd: string[], itemsToRemove: string[]}> => {
+    try {
+        const ai = getAIClient();
+        const prompt = `
+        ACT AS: Stream Manager AI.
+        TASK: Analyze this post-stream debrief log and update the checklist.
+        TRANSCRIPT: "${transcript}"
+        
+        If user mentions something failed (e.g. "mic was muted", "forgot water"), ADD it to checklist.
+        If user mentions something is no longer needed (e.g. "don't need light"), REMOVE it.
+        
+        OUTPUT JSON ONLY:
+        {
+            "itemsToAdd": ["Check Mic Mute", "Bring Water"],
+            "itemsToRemove": ["Old Item"]
+        }
+        `;
+
+        const response = await ai.models.generateContent({
+            model: MODEL_NAME,
+            contents: { role: 'user', parts: [{ text: prompt }] },
+            config: { responseMimeType: 'application/json' }
+        });
+
+        const text = response.text || "{}";
+        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(jsonStr);
     } catch (e) {
         return { itemsToAdd: [], itemsToRemove: [] };
     }
-}
+};
+
+// --- STREAM TITLE GENERATOR ---
+export const generateStreamTitles = async (game: string, vibe: string, lang: Language): Promise<string[]> => {
+    try {
+        const ai = getAIClient();
+        const prompt = `
+        ACT AS: Twitch/Kick Clickbait Expert.
+        TASK: Generate 3 viral stream titles.
+        GAME/TOPIC: ${game}
+        VIBE: ${vibe}
+        LANGUAGE: ${lang === 'es' ? 'Spanish' : 'English'}.
+        
+        OUTPUT FORMAT: Just 3 lines of text. No numbers, no quotes.
+        `;
+
+        const response = await ai.models.generateContent({
+            model: MODEL_NAME,
+            contents: { role: 'user', parts: [{ text: prompt }] }
+        });
+
+        const text = response.text || "";
+        return text.split('\n').filter(line => line.trim().length > 0).slice(0, 3);
+    } catch (e) {
+        return ["Error generating titles", "Try manual entry", "System Offline"];
+    }
+};
